@@ -638,6 +638,8 @@ else
   set -o pipefail && ${DIR}/match_and_call.sh ${REV} -d ${MIN_ID1:0:4} -D ${MIN_ID2:0:4} \
   -i ${WT_MATCHING} \
   -I ${MT_MATCHING} \
+  -n ${WT_NAME} \
+  -N ${MT_NAME} \
   -C ${COLUMNS} \
   -k ${k} -L ${MIN_LONG} -t ${THREADS} -E ${MEM} ${OV} || exit 1
 fi

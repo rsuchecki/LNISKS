@@ -34,13 +34,15 @@ function report {
 ##############################
 # Parse command line options #
 ##############################
-usage="USAGE: $(basename $0) [-h] [-i sample_1_kmers_file] [-I sample_2_kmers_file] [-k kmer_size]
+usage="USAGE: $(basename $0) [-h] [-i sample_1_kmers_file] [-I sample_2_kmers_file] [-k kmer_size] [-n sample1] [-N sample2]
 
 where:
   -h Show this helpful help text, and exit
   -i <string>  sample 1 FASTA file name                                       [REQUIRED]
   -I <string>  sample 2 FASTA file name                                       [REQUIRED]
   -k <int>     k-mer size                                                     [REQUIRED]
+  -n <string>  sample 1 label                                                 [REQUIRED]
+  -N <string>  sample 2 label                                                 [REQUIRED]
   -d <float>   min identity (0.0<=id<=1.0) required when clustering/paring seeds (default: ${MIN_ID1})
   -D <float>   min identity (0.0<=id<=1.0) required when calling SNPs (default: ${MIN_ID2})
   -R           report SNPs in reverse lexicographical order of samples labels
@@ -56,7 +58,7 @@ where:
 
 #echo $@
 
-while getopts ":hi:I:s:C:t:d:D:m:L:k:E:ROo" opt; do
+while getopts ":hi:I:s:C:t:d:D:m:L:k:n:N:E:ROo" opt; do
   case $opt in
     h) echo "$usage"
        exit;;
@@ -70,6 +72,8 @@ while getopts ":hi:I:s:C:t:d:D:m:L:k:E:ROo" opt; do
     L) MIN_LEN_UNCLUSTERED=${OPTARG};;
     t) THREADS=${OPTARG};;
     k) k=${OPTARG};;
+    n) LABEL1=${OPTARG};;
+    N) LABEL2=${OPTARG};;
     E) MEM=${OPTARG};;
     R) REVERSE_LEX_ORDER=true;;
     O) OVERWRITE1=true;;
@@ -85,7 +89,7 @@ while getopts ":hi:I:s:C:t:d:D:m:L:k:E:ROo" opt; do
 done
 
 #if [ -z ${SAMPLE1_FILE} ] || [ -z ${SAMPLE2_FILE} ] || [ -z ${k} ] ; then
-if [ -z ${SAMPLE1_FILE} ] || [ -z ${k} ] ; then
+if [ -z ${SAMPLE1_FILE} ] || [ -z ${k} ] || [ -z ${LABEL1} ] || [ -z ${LABEL2} ] ; then
   report "ERROR" "Required option not specified by the user, terminating!!!" >&2
   echo -e "${usage}" >&2
   exit 1
@@ -105,8 +109,8 @@ fi
 #
 #######################################################################################
 
-LABEL1=$(head -n 1 ${SAMPLE1_FILE} | tr -d '>' | cut -f1 -d' ' | sed 's/_[0-9]*$//')
-LABEL2=$(head -n 1 ${SAMPLE2_FILE} | tr -d '>' | cut -f1 -d' ' | sed 's/_[0-9]*$//')
+# LABEL1=$(head -n 1 ${SAMPLE1_FILE} | tr -d '>' | cut -f1 -d' ' | sed 's/_[0-9]*$//')
+# LABEL2=$(head -n 1 ${SAMPLE2_FILE} | tr -d '>' | cut -f1 -d' ' | sed 's/_[0-9]*$//')
 
 BNAME1=${SAMPLE1_FILE##*/}
 DIR1=${SAMPLE1_FILE%${BNAME1}}
