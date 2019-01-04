@@ -92,7 +92,7 @@ We want k to be close to highest possible value for which neither of the distrib
 We start by running the pipeline for several values of `-k`, but to speed things up we can stop before identification of sample-specific k-mers by applying `-S 2`.
 We then investigate the k-mer histograms.
 
-Using our example dataset, we run the pipeline with `-k 10` and `-k 20` and observe that at `k=10` the number of k-mers occurring 2,3,4,... times goes down before going up again, while `k=20` the initial slope is missing.
+Using our example dataset, we run the pipeline with `-k 10` and `-k 20` and observe that at `k=10` the number of k-mers occurring 2,3,4,... times goes down before going up again, while at `k=20` the initial slope is missing.
 The distribution at `k=20` is truncated so the sequencing coverage is too low for this k-mer size and some k-mers representing real sequence have been lost.
 ```
 ./scripts/plot_histogram.sh output/20-mers/20-mers_A_thaliana.histogram 80 | head -15
