@@ -1,6 +1,7 @@
 
 # Table of Contents <!-- omit in toc -->
 - [About LNISKS](#about-lnisks)
+  - [How to cite](#how-to-cite)
 - [Dependencies](#dependencies)
 - [Quick-start](#quick-start)
   - [Example data](#example-data)
@@ -20,8 +21,14 @@ Through the use of state-of-the-art tools such as [KMC3](https://github.com/refr
 For example, given hexaploid wheat datasets of 19X and 23X for wild-type and mutant bulks, respectively, the pipeline completed in 2 hours and 33 minutes on an allocation od of 32G of RAM and 16 logical cores (Xeon E5-2699 v3 2.30GHz CPUs).
 For comparison, sequential, single-threaded reading, decompression and discarding of the same input data takes 2 hours.
 
+### How to cite
+
+**LNISKS: Reference-free mutation identification for large and complex crop genome**. *Radosław Suchecki, Ajay Sandhu, Stéphane Deschamps, Victor Llaca, Petra Wolters, Nathan S. Watson-Haigh, Margaret Pallotta, Ryan Whitford, Ute Baumann*
+bioRxiv 580829; doi: https://doi.org/10.1101/580829
 
 ## Dependencies
+
+After you download the latest release or clone this repository go to LNISKS directory, and install/download the following:
 
 * [pigz](https://zlib.net/pigz/), e.g. on debian
   ```
@@ -62,9 +69,9 @@ To provide a minimal test set for the pipeline we used [ART read simulator](http
 ### Example run
 
 The following snippet will run the pipeline, using the two sets of simulated reads.
-In addition to the required parameters specifying the k-mer size (`-k 16`) the input read sets (`-M, -W`) and labels for these datasets (`-m, -w`), we also specify the number of threads to be used (`-t 2`).
-We want the minimum frequency of k-mers used for each of the samples to be detected from the respective distributions (`-I -i`).
-Finally, we use `-C $COLUMNS` to ensure that ascii plots make best use of available terminal width.
+In addition to the required parameters specifying the k-mer size (`-k 16`) the input read sets (`-M, -W`) and labels for these datasets (`-m, -w`), we also specify the number of CPU threads to be used (`-t 2` but the more the merrier).
+We want the minimum frequency of *k*-mers used for each of the samples to be detected from the respective distributions (`-I -i`).
+Finally, we use `-C $COLUMNS` to ensure that ascii plots make best use of the available terminal width.
 
 ```sh
 ./scripts/lnisks.sh -k 16 \
@@ -83,15 +90,18 @@ All this information with additional detail on parameters used can be found in t
 ## Execution on real data
 
 The intended application of LNISKS is to Bulked Segregant data, but in principle it should work well for identifying homozygous mutations between two sets of reads.
-The example run above is a good indication on how you could run it on real data.
+The example run above is a good indication on how you could run it on real data, however
+
+* be wary of `-i` and  `-I` settings as the minimum frequency estimation is rather basic and likely only applicable to whole genome sequencing data
+* select a higher *k*, 16 just happens to work reasonably well for the tiny example data sets
 
 ### The choice of k-mer size
 
-Longer k -mers are more likely to be unique within a genome than shorter k-mers, but as k increases (up to the read length), so does the sequencing coverage required for k-mers to occur with sufficient frequency to be distinguishable from low frequency k-mers containing sequencing errors.
+Longer *k* -mers are more likely to be unique within a genome than shorter *k*-mers, but as *k* increases (up to the read length), so does the sequencing coverage required for *k*-mers to occur with sufficient frequency to be distinguishable from low frequency *k*-mers containing sequencing errors.
 
-We want k to be close to highest possible value for which neither of the distributions for the two input sets is truncated.
+We want *k* to be close to highest possible value for which neither of the distributions for the two input sets is truncated.
 We start by running the pipeline for several values of `-k`, but to speed things up we can stop before identification of sample-specific k-mers by applying `-S 2`.
-We then investigate the k-mer histograms.
+We then investigate the generated *k*-mer histograms.
 
 Using our example dataset, we run the pipeline with `-k 10` and `-k 20` and observe that at `k=10` the number of k-mers occurring 2,3,4,... times goes down before going up again, while at `k=20` the initial slope is missing.
 The distribution at `k=20` is truncated so the sequencing coverage is too low for this k-mer size and some k-mers representing real sequence have been lost.
@@ -132,9 +142,9 @@ The distribution at `k=20` is truncated so the sequencing coverage is too low fo
 15   5,366   ############
 16   4,657   ##########
 ```
-Note that by default we exclude all k-mers occurring just once as these are likely to arise from sequencing errors in the input reads.
+Note that by default we exclude all *k*-mers occurring just once as these are likely to arise from sequencing errors in the input reads.
 
-Also note that for approx 20X data sets from common wheat the optimal k-mer size was 54.
+Also note that for approx 20X data sets from common wheat the optimal *k*-mer size was 54.
 
 ### Call prioritization
 
@@ -158,7 +168,7 @@ We then take the k-mer databases for each of the input data sets (A_thaliana, O_
     --out-calls-with-evidence output/16-mers/snpmers.A.tsv
 ```
 
-In a real word scenario, there could be multiple samples (e.g. for each bulk) which could be input by looping through individual k-mer databases. For each sample, its name/id needs to be printed immediately before the k-mers from the corresponding database.
+In a real word scenario, each bulk would likely comprise of multiple individuals which could be input by looping through individual k-mer databases. For each individual, its name/id needs to be printed immediately before the k-mers are dumped from the corresponding database - this would first require to compute individual k-mer database using `kmc` either directly or via the [`count_kmers.sh` wrapper](https://github.com/rsuchecki/LNISKS/blob/master/scripts/count_kmers.sh) as used by LNISKS pipeline.
 
 
 The head of output table generated by the example above should look like this:
