@@ -1,3 +1,5 @@
+[![DOI](https://zenodo.org/badge/161273660.svg)](https://zenodo.org/badge/latestdoi/161273660)
+[![Latest GitHub tag](https://img.shields.io/github/tag/rsuchecki/LNISKS.svg?label=latest%20release&logo=github)](https://github.com/rsuchecki/LNISKS/releases)
 
 # Table of Contents <!-- omit in toc -->
 - [About LNISKS](#about-lnisks)
