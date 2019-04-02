@@ -57,7 +57,7 @@ After you download the latest release or clone this repository go to LNISKS dire
   ```
 * [`yakat`](https://github.com/rsuchecki/yakat) - `yakat.jar` should be placed in `scripts/`
   ```
-  wget --directory-prefix scripts/ https://github.com/rsuchecki/yakat/releases/download/v0.9.1/yakat.jar
+  wget --directory-prefix scripts/ https://github.com/rsuchecki/yakat/releases/download/v0.9.2/yakat.jar
   ```
 
 
