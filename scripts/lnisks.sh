@@ -104,7 +104,7 @@ usage="USAGE: $(basename $0) [-h] -k <int> -j <int> -M <fastq.gz> -W <fastq.gz> 
   -y <int>        min frequency** for sample 2 filter DB(s) (default: ${WT_FILTER_MIN_FREQ})
 [Pairing seeds and calling SNPs]
   -d <float>      min identity (0.0<=id<=1.0) required when clustering/paring seeds (default: 1-4/(2k-1))
-  -D <float>      min identity (0.0<=id<=1.0) required when calling snps (default: 1-1/(2k-1))
+  -D <float>      min identity (0.0<=id<=1.0) required when calling snps (default: 1-2/(2k-1))
 [Further extensions of paired seeds - disabled by default, see -S]
   -B              k-merize all input reads (no baiting), suitable for small input datasets and/or big memory machines
   -J              infer min k-mer frequency for further extensions from distribution
