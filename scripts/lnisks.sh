@@ -197,7 +197,15 @@ while getopts ":hiIzk:j:o:M:m:W:w:Q:q:P:p:X:x:F:f:Y:y:d:D:BJb:n:N:e:t:T:C:E:O:L:
   esac
 done
 
+if [ -z ${k} ] ; then
+  report "ERROR" "Required option (-k) not specified by the user, terminating!!!" >&2
+  exit 1
+fi
 
+if [ ! -z ${j} ]  && [ ${j} -ge ${k} ]; then
+  report "ERROR" "Consider reducing the value of j. When j >= k none of the extended seeds would be considered for matching, so no variants would be called" >&2
+  exit 1
+fi
 
 if [ -z ${KEXTEND_K_BAIT} ]; then
   if [ ! -z ${j} ]; then
@@ -220,15 +228,7 @@ for arg in ${k} ${OVERWRITE_FROM_STEP} ${SKIP_FIRST_STEPS} ${STOP_AFTER_STEP} ${
     exit 1
   fi
 done
-if [ -z ${k} ] ; then
-  report "ERROR" "Required option (-k) not specified by the user, terminating!!!" >&2
-  exit 1
-fi
 
-if [ ! -z ${j} ]  && [ ${j} -ge ${k} ]; then
-  report "ERROR" "Consider reducing the value of j. When j >= k none of the extended seeds would be considered for matching, so no variants would be called" >&2
-  exit 1
-fi
 
 
 if [ ${SKIP_FIRST_STEPS} -le 0 ]; then
