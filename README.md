@@ -11,6 +11,7 @@
 - [Execution on real data](#execution-on-real-data)
   - [The choice of k-mer size](#the-choice-of-k-mer-size)
   - [Call prioritization](#call-prioritization)
+- [Run-time settings](#run-time-settings)
 
 ## About LNISKS
 
@@ -102,7 +103,7 @@ The example run above is a good indication on how you could run it on real data,
 Longer *k* -mers are more likely to be unique within a genome than shorter *k*-mers, but as *k* increases (up to the read length), so does the sequencing coverage required for *k*-mers to occur with sufficient frequency to be distinguishable from low frequency *k*-mers containing sequencing errors.
 
 We want *k* to be close to highest possible value for which neither of the distributions for the two input sets is truncated.
-We start by running the pipeline for several values of `-k`, but to speed things up we can stop before identification of sample-specific k-mers by applying `-S 2`.
+We start by running the pipeline for several values of `-k` with `-i` and `-I` switched on, but to speed things up we can stop before identification of sample-specific k-mers by applying `-S 2`.
 We then investigate the generated *k*-mer histograms.
 
 Using our example dataset, we run the pipeline with `-k 10` and `-k 20` and observe that at `k=10` the number of k-mers occurring 2,3,4,... times goes down before going up again, while at `k=20` the initial slope is missing.
@@ -199,3 +200,71 @@ Column headers can be deciphered as follows:
   * _freq - median frequency o k-mers supporting that base/allele
 
 These can be used for filtering or sorting calls.
+
+
+## Run-time settings
+
+```sh
+./scripts/lnisks.sh -h
+```
+
+```sh
+USAGE: lnisks.sh [-h] -k <int> -j <int> -M <fastq.gz> -W <fastq.gz> [options]
+[Input/Output settigns]
+  -k <int>        k-mer lenght                                             [REQUIRED]
+  -j <int>        j-mer length, j<k or even j<<k ^^                        [Step skipped if not given]
+  -o <string>     output directory (default: output)
+  -M <string>     sample 1 input fastq.gz file* [REQUIRED if not skipping step 1 (-s n, n>0)]
+  -W <string>     sample 2 input fastq.gz file* [REQUIRED if not skipping step 1 (-s n, n>0)]
+  -m <string>     sample 1 name/label (default: mutant)
+  -w <string>     sample 2 name/label (default: wildtype)
+  -Q <int>        sample 1 min input k-mer frequency (default: 2)
+  -q <int>        sample 2 min input k-mer frequency (default: 2)
+  -P <int>        sample 1 min output k-mer frequency (default: 5)
+  -p <int>        sample 2 min output k-mer frequency (default: 5)
+  -X <int>        sample 1 max output k-mer frequency (default: 9999999)
+  -x <int>        sample 2 max output k-mer frequency (default: 9999999)
+  -L <int>        Output long, unpaired seeds of no less than <int> bp (default: 250)^^
+[Simple procedure for inferring k-mer frequency - nonsense if input is RNA-Seq data]
+  -I              sample 1 infer min out k-mer frequency from distribution
+  -i              sample 2 infer min out k-mer frequency from distribution
+[Further filtering options for k-mer DBs]
+  -F <string>     filter DB(s)*^ for sample 1
+  -f <string>     filter DB(s)*^ for sample 2
+  -Y <int>        min frequency** for sample 1 filter DB(s) (default: 2)
+  -y <int>        min frequency** for sample 2 filter DB(s) (default: 2)
+[Pairing seeds and calling SNPs]
+  -d <float>      min identity (0.0<=id<=1.0) required when clustering/paring seeds (default: 1-4/(2k-1))
+  -D <float>      min identity (0.0<=id<=1.0) required when calling snps (default: 1-1/(2k-1))
+[Further extensions of paired seeds - disabled by default, see -S]
+  -B              k-merize all input reads (no baiting), suitable for small input datasets and/or big memory machines
+  -J              infer min k-mer frequency for further extensions from distribution
+  -b <int>        baiting k-mer length (default equals j-mer length)
+  -n <int>        min extension k-mer size (default equals k)
+  -N <int>        max extension k-mer size (default equals 2k)
+  -e <int>        extension k-mer size step (default: 10)
+[Runtime, skipping, stopping]
+  -C <int>        Print width for some reports, recommended use: -C $COLUMNS (defaults to 160)
+  -t <int>        number of threads for parallelized tasks (defaults to max(4,nproc/4: 4)
+  -T <string>     temporary files directory for KMC
+  -E <int>        max physical memory in GB to be used (defaults to 1/4 of physical mem: 1)
+  -O <int>        overwrite existing output files starting from step:
+                   1 k-mer counting
+                   2 k-mer min frequency inferring** [skipped by default, use {-I, -i} to run ]
+                   3 sample-specific k-mer identification
+                   4 custom filtering of sample-specific k-mers
+                   5 k-mer extension to seeds (unitigs)
+                   6 restriction of extended seeds to those sharing j-mers
+                   7 matching extended seeds and SNP calling
+                   8 baiting reads which match the paired sequences (step ignored if -B is used)
+                   9 kmerizing baited (or all if -B was used) input reads
+                  10 extending matched seeds (ideally beyond the sample-specific 2k-1 bp)
+  -s <int>        Skip first <int> steps of the pipeline (steps listed above, default: 0)
+  -S <int>        Stop pipeline after step <int> (steps listed above, default: 7)
+
+   * - Can be specified multiple times, and/or use escaped wildcards e.g. -M filename_R\?.fastq.gz
+  ^^ - The set of unpaired sequences will be incomplete if using j-mers for speeding up pairing
+  *^ - Filters are KMC DBs which can be generated using count_kmers.sh wrapper around KMC
+  ** - To use different min frequencies for individual filters use e.g. -Y "1 10 4",
+       these must be in the same order as the input filters
+```
