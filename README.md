@@ -9,6 +9,7 @@
   - [Example data](#example-data)
   - [Example run](#example-run)
 - [Execution on real data](#execution-on-real-data)
+  - [Multiple input files](#multiple-input-files)
   - [The choice of k-mer size](#the-choice-of-k-mer-size)
   - [Call prioritization](#call-prioritization)
 - [Run-time settings](#run-time-settings)
@@ -97,6 +98,35 @@ The example run above is a good indication on how you could run it on real data,
 
 * be wary of `-i` and  `-I` settings as the minimum frequency estimation is rather basic and likely only applicable to whole genome sequencing data
 * select a higher *k*, 16 just happens to work reasonably well for the tiny example data sets
+
+### Multiple input files
+
+When using wildcards to match multiple input files (e.g. `*.fq.gz`),
+the wildcards need to be escaped when passed as arguments to `scripts/lnisks.sh`, for example:
+
+```bash
+lnisks.sh \
+-W \*.fq.gz \
+-M \*.fq.gz \
+...
+```
+
+This is analogous to what was done in the [example run](#example-run) above.
+
+
+
+Alternatively, you can specify `-M` and `-W` separately for each input file, for example:
+
+```bash
+lnisks.sh \
+-M m1.fq.gz \
+-M m2.fq.gz \
+-M m3.fq.gz \
+-W w1.fq.gz \
+-W w2.fq.gz \
+-W w3.fq.gz \
+...
+```
 
 ### The choice of k-mer size
 
@@ -250,7 +280,7 @@ USAGE: lnisks.sh [-h] -k <int> -j <int> -M <fastq.gz> -W <fastq.gz> [options]
   -E <int>        max physical memory in GB to be used (defaults to 1/4 of physical mem: 1)
   -O <int>        overwrite existing output files starting from step:
                    1 k-mer counting
-                   2 k-mer min frequency inferring** [skipped by default, use {-I, -i} to run ]
+                   2 k-mer min frequency inferring [skipped by default, use {-I, -i} to run ]
                    3 sample-specific k-mer identification
                    4 custom filtering of sample-specific k-mers
                    5 k-mer extension to seeds (unitigs)

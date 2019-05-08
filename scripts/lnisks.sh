@@ -119,7 +119,7 @@ usage="USAGE: $(basename $0) [-h] -k <int> -j <int> -M <fastq.gz> -W <fastq.gz> 
   -E <int>        max physical memory in GB to be used (defaults to 1/4 of physical mem: ${MEM})
   -O <int>        overwrite existing output files starting from step:
                    1 k-mer counting
-                   2 k-mer min frequency inferring** [skipped by default, use {-I, -i} to run ]
+                   2 k-mer min frequency inferring [skipped by default, use {-I, -i} to run ]
                    3 sample-specific k-mer identification
                    4 custom filtering of sample-specific k-mers
                    5 k-mer extension to seeds (unitigs)
