@@ -564,6 +564,9 @@ fi
 ########################################################################################
 if [ "${SKIP_FIRST_STEPS}" -ge "${STEP}" ]; then
   report "INFO" "Skipping step ${STEP} at users request"
+  MATCHINGSUFFIX=extended.fa
+  WT_MATCHING=${WT_TOEXTEND%%.*}_${MATCHINGSUFFIX}
+  MT_MATCHING=${MT_TOEXTEND%%.*}_${MATCHINGSUFFIX}
 elif [ -z "${j}" ]; then
   report "INFO" "Skipping step ${STEP} as -j not specified by the user"
   MATCHINGSUFFIX=extended.fa
