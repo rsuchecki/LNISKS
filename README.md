@@ -12,7 +12,8 @@
   - [Multiple input files](#multiple-input-files)
   - [The choice of k-mer size](#the-choice-of-k-mer-size)
   - [Call prioritization](#call-prioritization)
-- [Run-time settings](#run-time-settings)
+- [Command line options](#command-line-options)
+  - [Run-time, skipping, stopping](#run-time-skipping-stopping)
 
 ## About LNISKS
 
@@ -179,6 +180,8 @@ Note that by default we exclude all *k*-mers occurring just once as these are li
 
 Also note that for approx 20X data sets from common wheat the optimal *k*-mer size was 54.
 
+
+
 ### Call prioritization
 
 One way to prioritize variant calls is to look in more detail into how well supported they are. For example, let's take the highest confidence, category A calls, although the full set of calls or each remaining category (B, C, D) could be processed in the same way.
@@ -232,7 +235,7 @@ Column headers can be deciphered as follows:
 These can be used for filtering or sorting calls.
 
 
-## Run-time settings
+## Command line options
 
 ```sh
 ./scripts/lnisks.sh -h
@@ -298,3 +301,14 @@ USAGE: lnisks.sh [-h] -k <int> -j <int> -M <fastq.gz> -W <fastq.gz> [options]
   ** - To use different min frequencies for individual filters use e.g. -Y "1 10 4",
        these must be in the same order as the input filters
 ```
+
+### Run-time, skipping, stopping
+
+By default, LNISKS will perform steps 1 to 7.
+On subsequent runs, for most tasks it will attempt to re-use the existing output files.
+Note that this carries some risks as some changes in parametrisation may not translate
+to changes in output.
+Warnings are given when a file is re-used, is you want a step to be re-computed
+in line with changed parameters use `-O <step number>`.
+
+
