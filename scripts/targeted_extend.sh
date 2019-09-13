@@ -15,7 +15,7 @@ function report {
 #Exit if any command fails
 set -e
 
-echo $0 $*
+#echo $0 $*
 
 # exit 1
 
