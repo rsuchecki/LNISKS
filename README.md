@@ -1,5 +1,6 @@
 [![DOI](https://zenodo.org/badge/161273660.svg)](https://zenodo.org/badge/latestdoi/161273660)
 [![Latest GitHub tag](https://img.shields.io/github/tag/rsuchecki/LNISKS.svg?label=latest%20release&logo=github)](https://github.com/rsuchecki/LNISKS/releases)
+[![GitHub commits since latest release](https://img.shields.io/github/commits-since/rsuchecki/LNISKS/latest.svg?logo=github)](https://github.com/plantinformatics/pretzel-input-generator/releases)
 
 # Table of Contents <!-- omit in toc -->
 - [About LNISKS](#about-lnisks)
@@ -43,19 +44,19 @@ After you download the latest release or clone this repository go to LNISKS dire
   ```
   mkdir -p bin \
     && cd bin \
-    && wget https://github.com/refresh-bio/KMC/releases/download/v3.1.0/KMC3.1.0.linux.tar.gz \
-    && tar xzvf KMC3.1.0.linux.tar.gz \
-    && rm KMC3.1.0.linux.tar.gz \
+    && wget https://github.com/refresh-bio/KMC/releases/download/v3.1.1/KMC3.1.1.linux.tar.gz \
+    && tar xzvf KMC3.1.1.linux.tar.gz \
+    && rm KMC3.1.1.linux.tar.gz \
     && cd ..
   ```
 * [VSEARCH](https://github.com/torognes/vsearch) should be available on PATH or or downloaded into `bin/` as follows:
   ```
   mkdir -p bin \
     && cd bin \
-    && wget https://github.com/torognes/vsearch/releases/download/v2.10.2/vsearch-2.10.2-linux-x86_64.tar.gz \
-    && tar xzvf vsearch-2.10.2-linux-x86_64.tar.gz \
-    && mv vsearch-2.10.2-linux-x86_64/bin/vsearch . \
-    && rm -r vsearch-2.10.2-linux-x86_64* \
+    && wget https://github.com/torognes/vsearch/releases/download/v2.14.1/vsearch-2.14.1-linux-x86_64.tar.gz \
+    && tar xzvf vsearch-2.14.1-linux-x86_64.tar.gz \
+    && mv vsearch-2.14.1-linux-x86_64/bin/vsearch . \
+    && rm -r vsearch-2.14.1-linux-x86_64* \
     && cd ..
   ```
 * [`yakat`](https://github.com/rsuchecki/yakat) - `yakat.jar` should be placed in `scripts/`

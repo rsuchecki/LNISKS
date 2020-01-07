@@ -410,7 +410,7 @@ else
     if [[ -s "${MT_HISTO}" ]] && [[ "${OV}" != true ]]; then
       report "WARNING" "${MT_HISTO} already exists, use -O ${STEP} to overwrite"
     else
-      kmc_tools -hp histogram ${MT_TO_SS%.kmc_pre} ${MT_HISTO} || \
+      kmc_tools -hp transform ${MT_TO_SS%.kmc_pre} histogram ${MT_HISTO} || \
       (report "ERROR" "Failed to estimate the minimum frequency for ${MT_NAME} k-mers to be included" && exit 1)
     fi
     MT_MIN_FREQ_OUT=$(awk -v prev=99999999999 '{if ($2>prev){print $1-1; exit}; prev=$2}' ${MT_HISTO})
@@ -426,7 +426,7 @@ else
     if [[ -s "${WT_HISTO}" ]] && [[ "${OV}" != true ]]; then
       report "WARNING" "${WT_HISTO} already exists, use -O ${STEP} to overwrite"
     else
-      kmc_tools -hp histogram ${WT_TO_SS%.kmc_pre} ${WT_HISTO} || \
+      kmc_tools -hp transform ${WT_TO_SS%.kmc_pre} histogram ${WT_HISTO} || \
       (report "ERROR" "Failed to estimate the minimum frequency for ${WT_NAME} k-mers to be included" && exit 1)
     fi
     WT_MIN_FREQ_OUT=$(awk -v prev=99999999999 '{if ($2>prev){print $1-1; exit}; prev=$2}' ${WT_HISTO})
