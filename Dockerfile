@@ -5,6 +5,7 @@ RUN apt-get update \
       pigz \
       gawk \
       bc \
+      bsdmainutils \
     && rm -rf /var/lib/apt/lists/*
 
 ENV KMC_VER=3.1.1
