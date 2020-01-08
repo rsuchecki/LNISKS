@@ -102,11 +102,14 @@ All this information with additional detail on parameters used can be found in t
 
 ### Example run using docker
 
+Adjust version as required 
+
 ```
+LNISKS_VERSION=1.1.0
 docker run \
   -v "$PWD":"$PWD" \
   -w "$PWD"  \
-  rsuchecki/lnisks:latest lnisks.sh -k 16 \
+  rsuchecki/lnisks:${LNISKS_VERSION} lnisks.sh -k 16 \
     -M example/A_thaliana_TAIR10_Mt_ArtIllumina_reads.\?.fq.gz \
     -W example/O_sativa_IRGSP-1.0_Mt_ArtIllumina_reads.\?.fq.gz \
     -m A_thaliana \
