@@ -3,7 +3,8 @@ DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 
 
 #UPDATE AS NECESSARY
-export YAKAT="${DIR}/yakat.jar"
+# export YAKAT="${DIR}/yakat.jar"
+export YAKAT="yakat"
 export PATH="${PATH}:"$(pwd)"/bin"
 
 #RESOURCES
@@ -582,7 +583,7 @@ else
     report "INFO" "Attempting to j-filter ${WT_NAME}, j=${j}"
 
     set -o pipefail && paste - - < ${WT_TOEXTEND%%.*}_extended.fa \
-    | java -Xms${MEM}G -Xmx${MEM}G -jar ${YAKAT} kmatch \
+    | ${YAKAT} --JVM "-Xms${MEM}G -Xmx${MEM}G" kmatch \
     --k-mer-length ${j} --k-mers ${MT_TOEXTEND%%.*}_extended.fa  \
     --threads ${THREADS} --print-user-settings \
     | tr '\t' '\n' > ${WT_MATCHING} \
@@ -595,7 +596,7 @@ else
   if [[ "${OVERWRITE_FROM_STEP}" -le "${STEP}" ]]  || [[ ! -s ${MT_MATCHING} ]]; then
     report "INFO" "Attempting to j-filter ${MT_NAME}, j=${j}"
     set -o pipefail && paste - - < ${MT_TOEXTEND%%.*}_extended.fa \
-    | java -Xms${MEM}G -Xmx${MEM}G -jar ${YAKAT} kmatch \
+    | ${YAKAT} --JVM "-Xms${MEM}G -Xmx${MEM}G" kmatch \
     --k-mer-length ${j} --k-mers ${WT_TOEXTEND%%.*}_extended.fa  \
     --threads ${THREADS} --print-user-settings \
     | tr '\t' '\n' > ${MT_MATCHING} \

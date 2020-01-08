@@ -177,7 +177,7 @@ if [[ ${BAIT} == true ]]; then
     fi
     if [[ ! -z ${SE} ]] || [[ ! -z ${SEd} ]]; then
       set -o pipefail && pigz -dcp2 ${SE} ${SEd} | paste - - - - \
-      | java -Xms${MEM}G -Xmx${MEM}G -jar ${YAKAT} kmatch \
+      |  ${YAKAT} kmatch --JVM "-Xms${MEM}G -Xmx${MEM}G" \
         --k-mer-length ${K_BAIT} --k-mers <(tr -d '-' < ${SEEDS_FASTA}) \
         --threads ${THREADS} --print-user-settings \
       | tr '\t' '\n' | pigz -9cp8 > ${CATCH_SE} \
@@ -197,7 +197,7 @@ if [[ ${BAIT} == true ]]; then
       set -o pipefail && paste \
         <(pigz -dcp2 ${R1} ${R1d} | paste - - - -) \
         <(pigz -dcp2 ${R2} ${R2d} | paste - - - -) \
-      | java -Xms${MEM}G -Xmx${MEM}G -jar ${YAKAT} kmatch \
+      |  ${YAKAT} kmatch --JVM "-Xms${MEM}G -Xmx${MEM}G" \
         --k-mer-length ${K_BAIT} --k-mers <(tr -d '-' < ${SEEDS_FASTA})  \
         --threads ${THREADS} --print-user-settings \
       | tee >(cut -f 1-4 -d$'\t' | tr '\t' '\n' | pigz -9cp8 > ${CATCH_R1}) \
@@ -255,7 +255,8 @@ if [ ! -f ${OUTFILE} ] || [ ${OVERWRITE3} == true ]; then
   #######################################################################################
   #XXX  KEXTEND
   #######################################################################################
-  KEXTEND="java -Xms${MEM}G -Xmx${MEM}G -Xss10M -jar ${YAKAT} kextend"
+  # KEXTEND="java -Xms${MEM}G -Xmx${MEM}G -Xss10M -jar ${YAKAT} kextend"
+  
   DUMP=()
 
   set -o pipefail && for k in $(seq ${K_MIN} ${K_STEP} ${K_MAX} ); do
@@ -279,7 +280,8 @@ if [ ! -f ${OUTFILE} ] || [ ${OVERWRITE3} == true ]; then
     DUMP+=("<(kmc_dump" "-ci${MIN_KMER_FREQ}" "-cx${MAX_KMER_FREQ}" "${DB}" "/dev/stdout)")
     ionice -c 2 -n 7 kmc_dump -ci${MIN_KMER_FREQ} -cx${MAX_KMER_FREQ} ${DB} /dev/stdout  #| pigz -9cp8 > ${DB}.dump.gz
   done \
-  | ${KEXTEND} --seed-file <(tr -d '-' < ${SEEDS_FASTA}) --threads ${THREADS} --fasta-out > ${OUTFILE}
+  | ${YAKAT} kextend --JVM "-Xms${MEM}G -Xmx${MEM}G -Xss10M" \
+    --seed-file <(tr -d '-' < ${SEEDS_FASTA}) --threads ${THREADS} --fasta-out > ${OUTFILE}
 
   report "INFO" "Finished extending seeds:  ${OUTFILE}"
 else

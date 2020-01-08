@@ -23,7 +23,7 @@ where:
   -H Show yakat kextender help, and exit
   -i <string>      input k-mers KMC DB file name                                       [REQUIRED]
   -S <string>      suffix of the output file (default: ${SUFFIX})
-  -e \"options\"     passess options to yakat.jar kextend
+  -e \"options\"     passess options to yakat kextend
   -s <size>        set initial Java heap size (defaults to ${Xms})
   -m <size>        set maximum Java heap size (defaults to ${Xmx})
   -f <int>         min frequency for a k-mer to be passed to the extender (default: whatever is present in DB)
@@ -38,7 +38,7 @@ while getopts ":hHi:s:m:e:S:f:F:O" opt; do
   case $opt in
     h) echo -e "$usage"
        exit;;
-    H) java -jar ${YAKAT} kextend -h
+    H) ${YAKAT} kextend -h
        exit;;
     i) SAMPLE1_FILE=${OPTARG};;
     f) MIN_FREQ="-ci"${OPTARG};;
@@ -83,10 +83,11 @@ else
   report "INFO" "Running k-mer extender for ${SAMPLE1_FILE}"
 
   INPUTDB=${SAMPLE1_FILE%.kmc_???}
-  KEXTEND="java -XX:+UseGCOverheadLimit -XX:+UseNUMA -XX:+UseParallelGC -XX:ParallelGCThreads=${SLURM_CPUS_PER_TASK:-16} -Xss150M -Xms${Xms} -Xmx${Xmx} -jar ${YAKAT} kextend"
+  # KEXTEND="java -XX:+UseGCOverheadLimit -XX:+UseNUMA -XX:+UseParallelGC -XX:ParallelGCThreads=${SLURM_CPUS_PER_TASK:-16} -Xss150M -Xms${Xms} -Xmx${Xmx} -jar ${YAKAT} kextend"
+   
 
   set -o pipefail && kmc_dump ${MIN_FREQ} ${INPUTDB} /dev/stdout \
-  | ${KEXTEND} ${EXT_OPT} 1> ${OUTFILE} \
+  | ${YAKAT} kextend --JVM "-XX:+UseGCOverheadLimit -XX:+UseNUMA -XX:+UseParallelGC -XX:ParallelGCThreads=${SLURM_CPUS_PER_TASK:-16} -Xss150M -Xms${Xms} -Xmx${Xmx}" ${EXT_OPT} 1> ${OUTFILE} \
   && report "INFO" "Finished extending k-mers " \
   || (report "ERROR" "Failed  extending k-mers" && rm  ${OUTFILE} && exit 1)
 fi

@@ -169,7 +169,8 @@ else
     rev="-r "
   fi
 
-  set -o pipefail && java  -Xms${MEM}G -Xmx${MEM}G -jar ${YAKAT} vclusters \
+  # set -o pipefail && java  -Xms${MEM}G -Xmx${MEM}G -jar ${YAKAT} vclusters \
+  set -o pipefail && ${YAKAT} --JVM "-Xms${MEM}G -Xmx${MEM}G" vclusters \
   --sample-ids ${LABEL1} ${LABEL2} ${REV} \
   --min-inter-identity ${MIN_ID2} \
   --max-indel-length 99999999999 \
