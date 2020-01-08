@@ -2,6 +2,10 @@
 [![Latest GitHub tag](https://img.shields.io/github/tag/rsuchecki/LNISKS.svg?label=latest%20release&logo=github)](https://github.com/rsuchecki/LNISKS/releases)
 [![GitHub commits since latest release](https://img.shields.io/github/commits-since/rsuchecki/LNISKS/latest.svg?logo=github)](https://github.com/plantinformatics/pretzel-input-generator/releases)
 
+[![Docker Cloud Build Status](https://img.shields.io/docker/cloud/build/rsuchecki/lnisks?logo=docker)](https://hub.docker.com/r/rsuchecki/lnisks)
+[![Docker Cloud Automated build](https://img.shields.io/docker/cloud/automated/rsuchecki/lnisks?logo=docker)](https://hub.docker.com/r/rsuchecki/lnisks)
+[![Docker pulls](https://img.shields.io/docker/pulls/rsuchecki/lnisks.svg?logo=docker)](https://hub.docker.com/r/rsuchecki/lnisks)
+
 - [About LNISKS](#about-lnisks)
   - [How to cite](#how-to-cite)
 - [Dependencies - skip if using dockerized pipeline](#dependencies---skip-if-using-dockerized-pipeline)
