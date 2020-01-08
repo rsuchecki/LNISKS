@@ -2,19 +2,20 @@
 [![Latest GitHub tag](https://img.shields.io/github/tag/rsuchecki/LNISKS.svg?label=latest%20release&logo=github)](https://github.com/rsuchecki/LNISKS/releases)
 [![GitHub commits since latest release](https://img.shields.io/github/commits-since/rsuchecki/LNISKS/latest.svg?logo=github)](https://github.com/plantinformatics/pretzel-input-generator/releases)
 
-# Table of Contents <!-- omit in toc -->
 - [About LNISKS](#about-lnisks)
   - [How to cite](#how-to-cite)
-- [Dependencies](#dependencies)
+- [Dependencies - skip if using dockerized pipeline](#dependencies---skip-if-using-dockerized-pipeline)
 - [Quick-start](#quick-start)
   - [Example data](#example-data)
   - [Example run](#example-run)
+  - [Example run using docker](#example-run-using-docker)
 - [Execution on real data](#execution-on-real-data)
   - [Multiple input files](#multiple-input-files)
   - [The choice of k-mer size](#the-choice-of-k-mer-size)
   - [Call prioritization](#call-prioritization)
 - [Command line options](#command-line-options)
   - [Run-time, skipping, stopping](#run-time-skipping-stopping)
+
 
 ## About LNISKS
 
@@ -32,14 +33,19 @@ For comparison, sequential, single-threaded reading, decompression and discardin
 **LNISKS: Reference-free mutation identification for large and complex crop genome**. *Radosław Suchecki, Ajay Sandhu, Stéphane Deschamps, Victor Llaca, Petra Wolters, Nathan S. Watson-Haigh, Margaret Pallotta, Ryan Whitford, Ute Baumann*
 bioRxiv 580829; doi: https://doi.org/10.1101/580829
 
-## Dependencies
+## Dependencies - skip if using dockerized pipeline
 
 After you download the latest release or clone this repository go to LNISKS directory, and install/download the following:
 
-* [pigz](https://zlib.net/pigz/), e.g. on debian
+* Linux toolkit including `gawk, bc, column,` [`pigz`](https://zlib.net/pigz/) - e.g. on debian 
+  
   ```
-  sudo apt install pigz
+  sudo apt install -y pigz \
+      gawk \
+      bc \
+      bsdmainutils
   ```
+  
 * [KMC3](https://github.com/refresh-bio/KMC) should be available on PATH or downloaded into `bin/` as follows:
   ```
   mkdir -p bin \
@@ -88,10 +94,28 @@ Finally, we use `-C $COLUMNS` to ensure that ascii plots make best use of the av
   -t 2 \
   -I -i \
   -C $COLUMNS
+  -S 10
 ```
 
 The output to the terminal is rather verbose, but the pipeline was mostly used on large and complex datasets were we found this verbosity useful.
 All this information with additional detail on parameters used can be found in the log files in the  output directory, in this case under `output/16-mers/logs/`.
+
+### Example run using docker
+
+```
+docker run \
+  -v "$PWD":"$PWD" \
+  -w "$PWD"  \
+  rsuchecki/lnisks:latest lnisks.sh -k 16 \
+    -M example/A_thaliana_TAIR10_Mt_ArtIllumina_reads.\?.fq.gz \
+    -W example/O_sativa_IRGSP-1.0_Mt_ArtIllumina_reads.\?.fq.gz \
+    -m A_thaliana \
+    -w O_sativa \
+    -t 2 \
+    -I -i \
+    -C $COLUMNS \
+    -S 10
+```
 
 ## Execution on real data
 
