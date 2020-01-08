@@ -3,7 +3,8 @@ DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 
 
 #UPDATE AS NECESSARY
-export YAKAT="${DIR}/yakat.jar"
+# export YAKAT="${DIR}/yakat.jar"
+export YAKAT="yakat"
 export PATH="${PATH}:"$(pwd)"/bin"
 
 #RESOURCES
@@ -410,7 +411,7 @@ else
     if [[ -s "${MT_HISTO}" ]] && [[ "${OV}" != true ]]; then
       report "WARNING" "${MT_HISTO} already exists, use -O ${STEP} to overwrite"
     else
-      kmc_tools -hp histogram ${MT_TO_SS%.kmc_pre} ${MT_HISTO} || \
+      kmc_tools -hp transform ${MT_TO_SS%.kmc_pre} histogram ${MT_HISTO} || \
       (report "ERROR" "Failed to estimate the minimum frequency for ${MT_NAME} k-mers to be included" && exit 1)
     fi
     MT_MIN_FREQ_OUT=$(awk -v prev=99999999999 '{if ($2>prev){print $1-1; exit}; prev=$2}' ${MT_HISTO})
@@ -426,7 +427,7 @@ else
     if [[ -s "${WT_HISTO}" ]] && [[ "${OV}" != true ]]; then
       report "WARNING" "${WT_HISTO} already exists, use -O ${STEP} to overwrite"
     else
-      kmc_tools -hp histogram ${WT_TO_SS%.kmc_pre} ${WT_HISTO} || \
+      kmc_tools -hp transform ${WT_TO_SS%.kmc_pre} histogram ${WT_HISTO} || \
       (report "ERROR" "Failed to estimate the minimum frequency for ${WT_NAME} k-mers to be included" && exit 1)
     fi
     WT_MIN_FREQ_OUT=$(awk -v prev=99999999999 '{if ($2>prev){print $1-1; exit}; prev=$2}' ${WT_HISTO})
@@ -582,7 +583,7 @@ else
     report "INFO" "Attempting to j-filter ${WT_NAME}, j=${j}"
 
     set -o pipefail && paste - - < ${WT_TOEXTEND%%.*}_extended.fa \
-    | java -Xms${MEM}G -Xmx${MEM}G -jar ${YAKAT} kmatch \
+    | ${YAKAT} --JVM "-Xms${MEM}G -Xmx${MEM}G" kmatch \
     --k-mer-length ${j} --k-mers ${MT_TOEXTEND%%.*}_extended.fa  \
     --threads ${THREADS} --print-user-settings \
     | tr '\t' '\n' > ${WT_MATCHING} \
@@ -595,7 +596,7 @@ else
   if [[ "${OVERWRITE_FROM_STEP}" -le "${STEP}" ]]  || [[ ! -s ${MT_MATCHING} ]]; then
     report "INFO" "Attempting to j-filter ${MT_NAME}, j=${j}"
     set -o pipefail && paste - - < ${MT_TOEXTEND%%.*}_extended.fa \
-    | java -Xms${MEM}G -Xmx${MEM}G -jar ${YAKAT} kmatch \
+    | ${YAKAT} --JVM "-Xms${MEM}G -Xmx${MEM}G" kmatch \
     --k-mer-length ${j} --k-mers ${WT_TOEXTEND%%.*}_extended.fa  \
     --threads ${THREADS} --print-user-settings \
     | tr '\t' '\n' > ${MT_MATCHING} \
