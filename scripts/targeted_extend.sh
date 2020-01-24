@@ -256,7 +256,7 @@ if [ ! -f ${OUTFILE} ] || [ ${OVERWRITE3} == true ]; then
   #XXX  KEXTEND
   #######################################################################################
   # KEXTEND="java -Xms${MEM}G -Xmx${MEM}G -Xss10M -jar ${YAKAT} kextend"
-  
+
   DUMP=()
 
   set -o pipefail && for k in $(seq ${K_MIN} ${K_STEP} ${K_MAX} ); do
@@ -264,11 +264,11 @@ if [ ! -f ${OUTFILE} ] || [ ${OVERWRITE3} == true ]; then
     if [ "${INFER_MIN_FREQ}" == true ]; then
       HISTO=${DB}.histogram
       report "INFO" "Attempting to estimate the minimum frequency from ${DB}..."
-      kmc_tools -hp histogram ${DB} ${HISTO} || exit 1
+      kmc_tools -hp transform ${DB} histogram ${HISTO} || exit 1
 #      MIN_KMER_FREQ=$(awk -v prev=99999999999 '{if ($2>prev){print $1-1; exit}; prev=$2}' ${HISTO})
 ##      (report "ERROR" "Failed to estimate the minimum k-mer frequency from ${DB}" && exit 1)
 #      report "INFO" "Estimated minimum frequency k-mers to be included: ${MIN_KMER_FREQ}"
-      kmc_tools -hp histogram ${DB} ${HISTO} || \
+      kmc_tools -hp transform ${DB} histogram ${HISTO} || \
       (report "ERROR" "Failed to estimate the minimum frequency for ${DB} k-mers to be included" && exit 1)
       MIN_KMER_FREQ=$(awk -v prev=99999999999 '{if ($2>prev){print $1-1; exit}; prev=$2}' ${HISTO})
       MAX_PRINT1=$(sort -k2,2nr ${HISTO} | head -1 | cut -f1)
