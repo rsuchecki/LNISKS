@@ -1,4 +1,6 @@
 #!/bin/bash
+set -eo pipefail #http://redsymbol.net/articles/unofficial-bash-strict-mode/
+
 DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 
 
@@ -12,8 +14,6 @@ function report {
   printf "${FORMAT}" "`date +"%Y-%m-%d %a %T"`" "[$(basename $0)]" "[${1}]" "${2}" >&2
 }
 
-#Exit if any command fails
-set -e
 
 #echo $0 $*
 
@@ -40,6 +40,8 @@ OVERWRITE1=false
 OVERWRITE2=false
 OVERWRITE3=false
 
+COLUMNS=${COLUMNS:-160}
+
 THREADS=$(echo "$(nproc) /4" | bc )
 THREADS=$([[ ${THREADS} -ge "4" ]] && echo "${THREADS}" || echo "4") #ensure not less than 4
 ##############################
@@ -65,6 +67,7 @@ where:
   -o              overwrite existing matched FASTQ reads, implies -O, -R, ignored if -B
   -O              overwrite existing k-mer DBs, implies -R
   -R              overwrite existing extended seeds
+  -C <int>        Print width for some reports, recommended use: -C \$COLUMNS (defaults to ${COLUMNS})
 "
 
 
@@ -88,6 +91,7 @@ while getopts ":hs:d:i:k:Bm:M:S:f:F:t:E:oORI" opt; do
     o) OVERWRITE1=true; OVERWRITE2=true; OVERWRITE3=true;;
     O) OVERWRITE2=true; OVERWRITE3=true;;
     R) OVERWRITE3=true;;
+    C) COLUMNS=${OPTARG};;
     ?) printf "Illegal option: '-%s'\n" "${OPTARG}" >&2
        echo "$usage" >&2
        exit 1;;
@@ -257,35 +261,30 @@ if [ ! -f ${OUTFILE} ] || [ ${OVERWRITE3} == true ]; then
   #######################################################################################
   # KEXTEND="java -Xms${MEM}G -Xmx${MEM}G -Xss10M -jar ${YAKAT} kextend"
 
-  DUMP=()
+  # DUMP=()
 
-  set -o pipefail && for k in $(seq ${K_MIN} ${K_STEP} ${K_MAX} ); do
+# echo "$0 $@"
+  for k in $(seq ${K_MIN} ${K_STEP} ${K_MAX} ); do
     DB=${WD}/DBs/${k}-mers_${OUTFILE0%.fasta}.catch_k_${K_BAIT}.db
     if [ "${INFER_MIN_FREQ}" == true ]; then
       HISTO=${DB}.histogram
       report "INFO" "Attempting to estimate the minimum frequency from ${DB}..."
-      kmc_tools -hp transform ${DB} histogram ${HISTO} || exit 1
-#      MIN_KMER_FREQ=$(awk -v prev=99999999999 '{if ($2>prev){print $1-1; exit}; prev=$2}' ${HISTO})
-##      (report "ERROR" "Failed to estimate the minimum k-mer frequency from ${DB}" && exit 1)
-#      report "INFO" "Estimated minimum frequency k-mers to be included: ${MIN_KMER_FREQ}"
-      kmc_tools -hp transform ${DB} histogram ${HISTO} || \
-      (report "ERROR" "Failed to estimate the minimum frequency for ${DB} k-mers to be included" && exit 1)
+      kmc_tools -hp transform ${DB} histogram ${HISTO} || report "ERROR" "Failed to estimate the minimum frequency for ${DB} k-mers to be included"
       MIN_KMER_FREQ=$(awk -v prev=99999999999 '{if ($2>prev){print $1-1; exit}; prev=$2}' ${HISTO})
-      MAX_PRINT1=$(sort -k2,2nr ${HISTO} | head -1 | cut -f1)
-     ./${DIR}/plot_histogram.sh ${HISTO} ${COLUMNS} | tee ${HISTO}.plot | awk -vM="${MAX_PRINT}" 'NR<=(M*2)'
-      report "INFO" "Estimated minimum frequency of k-mers to be included: ${MT_MIN_FREQ_OUT}, see ${HISTO}.plot"
+      # Each of the following two lines causes slient exit and/or loop break
+      # MAX_PRINT=$(awk -v MIN="${MIN_KMER_FREQ}" '$1>=MIN' "${HISTO}" | sort -k2,2nr | head -1 | cut -f1)
+      # ${DIR}/plot_histogram.sh ${HISTO} ${COLUMNS} | tee ${HISTO}.plot && report true #| awk -vM="${MAX_PRINT}" 'NR<=(M*2)' >&2
+      report "INFO" "Estimated minimum frequency of k-mers to be included: ${MIN_KMER_FREQ}, see ${HISTO}.plot"
     fi
-
     report "INFO" "Dumping ${k}-mers from caugth reads > kextend "
-    DUMP+=("<(kmc_dump" "-ci${MIN_KMER_FREQ}" "-cx${MAX_KMER_FREQ}" "${DB}" "/dev/stdout)")
+    # DUMP+=("<(kmc_dump" "-ci${MIN_KMER_FREQ}" "-cx${MAX_KMER_FREQ}" "${DB}" "/dev/stdout)")
     ionice -c 2 -n 7 kmc_dump -ci${MIN_KMER_FREQ} -cx${MAX_KMER_FREQ} ${DB} /dev/stdout  #| pigz -9cp8 > ${DB}.dump.gz
   done \
   | ${YAKAT} kextend --JVM "-Xms${MEM}G -Xmx${MEM}G -Xss10M" \
-    --seed-file <(tr -d '-' < ${SEEDS_FASTA}) --threads ${THREADS} --fasta-out > ${OUTFILE}
-
+      --seed-file <(tr -d '-' < ${SEEDS_FASTA}) --threads ${THREADS} --fasta-out > ${OUTFILE}
   report "INFO" "Finished extending seeds:  ${OUTFILE}"
 else
-  report "WARNING" "${OUTFILE} already exists, use the -R flag to overwrite " | tee -a ${LOGFILE}
+  report "WARNING" "${OUTFILE} already exists, use the -R flag to overwrite "
 fi
 
 
