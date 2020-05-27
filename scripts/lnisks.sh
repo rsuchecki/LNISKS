@@ -117,6 +117,7 @@ usage="USAGE: $(basename $0) [-h] -k <int> -j <int> -M <fastq.gz> -W <fastq.gz> 
   -C <int>        Print width for some reports, recommended use: -C \$COLUMNS (defaults to ${COLUMNS})
   -t <int>        number of threads for parallelized tasks (defaults to max(4,nproc/4: ${THREADS})
   -T <string>     temporary files directory for KMC
+  -r              run KMC in ram-only mode
   -E <int>        max physical memory in GB to be used (defaults to 1/4 of physical mem: ${MEM})
   -O <int>        overwrite existing output files starting from step:
                    1 k-mer counting
@@ -146,7 +147,7 @@ usage="USAGE: $(basename $0) [-h] -k <int> -j <int> -M <fastq.gz> -W <fastq.gz> 
 
 
 ALLARGS=()
-while getopts ":hiIzk:j:o:M:m:W:w:Q:q:P:p:X:x:F:f:Y:y:d:D:BJb:n:N:e:t:T:C:E:O:L:s:S:" opt; do
+while getopts ":hriIzk:j:o:M:m:W:w:Q:q:P:p:X:x:F:f:Y:y:d:D:BJb:n:N:e:t:T:C:E:O:L:s:S:" opt; do
   ALLARGS+=("-"${opt} ${OPTARG})
 #  echo "PARSING -${opt} ${OPTARG}"
   case $opt in
@@ -183,6 +184,7 @@ while getopts ":hiIzk:j:o:M:m:W:w:Q:q:P:p:X:x:F:f:Y:y:d:D:BJb:n:N:e:t:T:C:E:O:L:
     C) COLUMNS=${OPTARG};;
     t) THREADS=${OPTARG};;
     T) TMPDIR=${OPTARG};; ##TODO USE mkdtemp
+    r) KMC_RAM_ONLY=true;;
     E) MEM=${OPTARG};;
     L) MIN_LONG=${OPTARG};;
     O) OVERWRITE_FROM_STEP=${OPTARG};;
@@ -343,7 +345,7 @@ else
     ln -sr ${F%.*}.kmc_suf ${WD}/${k}-mers_${WT_NAME}.db.kmc_suf
   else
     set -o pipefail && ${DIR}/count_kmers.sh -k ${k} -L ${WT_MIN_FREQ_IN} -S ${MEM} -m 255 \
-    ${FILES[@]} -b ${WT_NAME} -t ${THREADS} -d ${WD} ${SETTMP} ${OV} || exit 1
+    ${FILES[@]} -b ${WT_NAME} -t ${THREADS} -d ${WD} ${SETTMP} ${OV} ${KMC_IN_RAM} || exit 1
   fi
 
   # MT
@@ -363,7 +365,7 @@ else
     ln -sr ${F%.*}.kmc_suf ${WD}/${k}-mers_${MT_NAME}.db.kmc_suf
   else
     set -o pipefail && ${DIR}/count_kmers.sh -k ${k} -L ${MT_MIN_FREQ_IN} -S ${MEM} -m 255 \
-    ${FILES[@]} -b ${MT_NAME} -t ${THREADS} -d ${WD} ${SETTMP} ${OV} || exit 1
+    ${FILES[@]} -b ${MT_NAME} -t ${THREADS} -d ${WD} ${SETTMP} ${OV} ${KMC_IN_RAM} || exit 1
   fi
 
 #  # HT
@@ -407,18 +409,30 @@ else
   if [ "${MT_INFER_MIN_FREQ}" == true ]; then
     MT_HISTO=${WD}/${k}-mers_${MT_NAME}.histogram
     report "INFO" "Attempting to estimate the minimum frequency for ${MT_NAME}..."
-
     if [[ -s "${MT_HISTO}" ]] && [[ "${OV}" != true ]]; then
       report "WARNING" "${MT_HISTO} already exists, use -O ${STEP} to overwrite"
     else
       kmc_tools -hp transform ${MT_TO_SS%.kmc_pre} histogram ${MT_HISTO} || \
       (report "ERROR" "Failed to estimate the minimum frequency for ${MT_NAME} k-mers to be included" && exit 1)
     fi
-    MT_MIN_FREQ_OUT=$(awk -v prev=99999999999 '{if ($2>prev){print $1-1; exit}; prev=$2}' ${MT_HISTO})
+
+    MT_MAX=$(sort -k2,2nr ${MT_HISTO} | head -1 | cut -f1)
+    MT_LMIN=$(awk -v prev=99999999999 '{if($2>prev){print $1-1; exit}; prev=$2}' ${MT_HISTO}) #LOCAL MINIMUM ASSUMING THERE IS A HUMP
+    MT_MIN_FREQ_OUT=$(((MT_LMIN-MT_MAX)*2/3))
+    MT_MIN_FREQ_OUT=$(( MT_MIN_FREQ_OUT > 2 ? MT_MIN_FREQ_OUT : 2))
+
+
+    # MT_MIN_FREQ_OUT=$(awk -v prev=99999999999 '{if ($2>prev){print $1-1; exit}; prev=$2}' ${MT_HISTO})
+    # MAX_PRINT1=$(awk -vMIN=${MT_MIN_FREQ_OUT} -vPREV=0 '{if ($1>MIN && $2<prev){print $1-1; exit}; prev=$2}' ${MT_HISTO})
+    # #MAX_PRINT1=$(sort -k2,2nr ${MT_HISTO} | head -1 | cut -f1)
     MAX_PRINT1=$(awk -vMIN=${MT_MIN_FREQ_OUT} -vPREV=0 '{if ($1>MIN && $2<prev){print $1-1; exit}; prev=$2}' ${MT_HISTO})
-    #MAX_PRINT1=$(sort -k2,2nr ${MT_HISTO} | head -1 | cut -f1)
     ./scripts/plot_histogram.sh ${MT_HISTO} ${COLUMNS} | tee ${MT_HISTO}.plot | awk -vM="${MAX_PRINT1}" 'NR<=(M*3)'
     report "INFO" "Estimated minimum frequency for ${MT_NAME} k-mers to be included: ${MT_MIN_FREQ_OUT}, see ${MT_HISTO}.plot"
+
+
+    # MAX=$(sort -k2,2nr $HISTO | head -1 | cut -f2)
+    # MIN=$(sort -k2,2n $HISTO | head -1 | cut -f2)
+    # LMIN=$(awk -v prev=99999999999 '{if($2>prev){print prev; exit}; prev=$2}' $HISTO)
   fi
 
   if [ "${WT_INFER_MIN_FREQ}" == true ]; then
@@ -430,8 +444,14 @@ else
       kmc_tools -hp transform ${WT_TO_SS%.kmc_pre} histogram ${WT_HISTO} || \
       (report "ERROR" "Failed to estimate the minimum frequency for ${WT_NAME} k-mers to be included" && exit 1)
     fi
-    WT_MIN_FREQ_OUT=$(awk -v prev=99999999999 '{if ($2>prev){print $1-1; exit}; prev=$2}' ${WT_HISTO})
-    #MAX_PRINT2=$(sort -k2,2nr ${WT_HISTO} | head -1 | cut -f1)
+    WT_MAX=$(sort -k2,2nr ${WT_HISTO} | head -1 | cut -f1)
+    WT_LMIN=$(awk -v prev=99999999999 '{if($2>prev){print $1-1; exit}; prev=$2}' ${WT_HISTO}) #LOCAL MINIMUM ASSUMING THERE IS A HUMP
+    WT_MIN_FREQ_OUT=$(((WT_LMIN-WT_MAX)*2/3))
+    WT_MIN_FREQ_OUT=$(( WT_MIN_FREQ_OUT > 2 ? WT_MIN_FREQ_OUT : 2))
+
+
+    # WT_MIN_FREQ_OUT=$(awk -v prev=99999999999 '{if ($2>prev){print $1-1; exit}; prev=$2}' ${WT_HISTO})
+    # #MAX_PRINT2=$(sort -k2,2nr ${WT_HISTO} | head -1 | cut -f1)
     MAX_PRINT2=$(awk -vMIN=${WT_MIN_FREQ_OUT} -vPREV=0 '{if ($1>MIN && $2<prev){print $1-1; exit}; prev=$2}' ${WT_HISTO})
     ./scripts/plot_histogram.sh ${WT_HISTO} ${COLUMNS} | tee ${WT_HISTO}.plot | awk -vM="${MAX_PRINT2}" 'NR<=(M*2)'
     report "INFO" "Estimated minimum frequency for ${WT_NAME} k-mers to be included: ${WT_MIN_FREQ_OUT}, see ${WT_HISTO}.plot"
@@ -701,6 +721,10 @@ else
 #  fgrep -A1 --no-group-separator ${WT_NAME} ${UNPAIRED} > ${WT_UNPAIRED}
 
 
+  if [[ ${KMC_RAM_ONLY} == true ]]; then
+    KMC_IN_RAM="-r"
+  fi
+
   if [[ ${KEXTEND_NO_BAIT} == true ]]; then
     NOBAIT="-B"
   fi
@@ -726,7 +750,7 @@ else
       -s ${!tFNAME} -F ${!tFREQ} -k ${KEXTEND_K_BAIT} \
       -m ${KEXTEND_K_MIN} -M ${KEXTEND_K_MAX} -S ${KEXTEND_K_STEP} \
       ${FILES[@]} ${NOBAIT} ${INFER_FREQ_EXTEND} -E ${MEM} \
-      -t ${THREADS} ${OV} || exit 1
+      -t ${THREADS} ${OV} ${KMC_IN_RAM} || exit 1
     done
   done
 fi

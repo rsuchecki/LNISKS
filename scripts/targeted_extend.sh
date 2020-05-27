@@ -64,6 +64,7 @@ where:
   -F <int>        max frequency of a kmer to be used for extending (defaults to ${MAX_KMER_FREQ})
   -t <int>        number of threads for parallelized tasks (defaults to max(4,(nproc/4=${THREADS}))
   -E <int>        max physical memory in GB to be used (defaults to 1/4 of physical mem)
+  -r              run KMC in ram-only mode
   -o              overwrite existing matched FASTQ reads, implies -O, -R, ignored if -B
   -O              overwrite existing k-mer DBs, implies -R
   -R              overwrite existing extended seeds
@@ -71,7 +72,7 @@ where:
 "
 
 
-while getopts ":hs:d:i:k:Bm:M:S:f:F:t:E:oORI" opt; do
+while getopts ":hs:d:i:k:Bm:M:S:f:F:t:E:oORIr" opt; do
   case $opt in
     h) echo "$usage"
        exit;;
@@ -88,6 +89,7 @@ while getopts ":hs:d:i:k:Bm:M:S:f:F:t:E:oORI" opt; do
     F) MAX_KMER_FREQ=${OPTARG};;
     t) THREADS=${OPTARG};;
     E) MEM=${OPTARG};;
+    r) KMC_RAM_ONLY=true;;
     o) OVERWRITE1=true; OVERWRITE2=true; OVERWRITE3=true;;
     O) OVERWRITE2=true; OVERWRITE3=true;;
     R) OVERWRITE3=true;;
@@ -113,7 +115,7 @@ if [ -z ${SEEDS_FASTA} ] || ([ -z ${K_BAIT} ] && [ ${BAIT} == true ] ); then
 fi
 
 if [ -z ${FASTQ_DIR} ] && [ ${#FASTQ_FILES[@]} -eq 0 ]; then
-  report "ERROR" "Must specify -d and/or -f !!!" >&2
+  report "ERROR" "Must specify -d and/or -i !!!" >&2
   echo -e "${usage}" >&2
   exit 1
 fi
@@ -127,6 +129,9 @@ for f in ${SEEDS_FASTA} ${FASTQ_FILES[@]} ; do
   fi
 done
 
+if [[ ${KMC_RAM_ONLY} == true ]]; then
+  KMC_IN_RAM="-r"
+fi
 
 
 #if [[ ${FILTER_NAME} == *['!'@#\$%^\&*()+/.]* ]]; then
@@ -161,6 +166,8 @@ CATCH_SE=${OUTBASE}${K_BAIT}_SE.fastq.gz
 CATCH_R1=${OUTBASE}${K_BAIT}_R1.fastq.gz
 CATCH_R2=${OUTBASE}${K_BAIT}_R2.fastq.gz
 
+echo ${CATCH_R1} ${CATCH_R2} ${CATCH_SE}
+
 report "INFO" "Targeted extending initiated, k=({k_i, K_{i-1}+${K_STEP},...,k_j} | ${K_MIN}<=k<=${K_MAX}), MIN_KMER_FREQ=${MIN_KMER_FREQ}, MAX_KMER_FREQ=${MAX_KMER_FREQ}"
 
 if [[ ${BAIT} == true ]]; then
@@ -172,12 +179,17 @@ if [[ ${BAIT} == true ]]; then
   #######################################################################################
   #XXX  BAIT READS
   #######################################################################################
+
 # BAIT SE
   if [ ! -f ${CATCH_SE} ] || [ ${OVERWRITE1} == true ]; then
-    SE=$(ls ${FASTQ_FILES[@]} | fgrep -i SE.fastq.gz | tr '\n' ' ')
+    SE=$((ls ${FASTQ_FILES[@]} | fgrep -i SE.fastq.gz | tr '\n' ' ') || echo '' )
+    report "info" "Here"
     if [[ ! -z ${FASTQ_DIR} ]]; then
       FASTQ_DIR="${FASTQ_DIR}/*"
       SEd=$(readlink -f ${FASTQ_DIR} | grep -iE f(ast)?q.gz | grep -viE '(1|2)\.f(ast)?q\.gz' | tr '\n' ' ')
+      report "INFO" "INFILES: ${SEd}"
+    else
+      report "INFO" "No FASTQ dir?"
     fi
     if [[ ! -z ${SE} ]] || [[ ! -z ${SEd} ]]; then
       set -o pipefail && pigz -dcp2 ${SE} ${SEd} | paste - - - - \
@@ -186,12 +198,14 @@ if [[ ${BAIT} == true ]]; then
         --threads ${THREADS} --print-user-settings \
       | tr '\t' '\n' | pigz -9cp8 > ${CATCH_SE} \
       || exit 1
+    else
+      report "INFO" "No FASTQ dir OR FASTQ files?"
     fi
   fi
 # BAIT PE
   if [ ! -f ${CATCH_R1} ] || [ ! -f ${CATCH_R2} ] || [ ${OVERWRITE1} == true ]; then
-    R1=$(ls ${FASTQ_FILES[@]} | grep -iE '1\.f(ast)?q\.gz' 2> /dev/null | tr '\n' ' ')
-    R2=$(ls ${FASTQ_FILES[@]} | grep -iE '2\.f(ast)?q\.gz' 2> /dev/null | tr '\n' ' ')
+    R1=$((ls ${FASTQ_FILES[@]} | grep -iE '1\.f(ast)?q\.gz' 2> /dev/null | tr '\n' ' ') || echo '')
+    R2=$((ls ${FASTQ_FILES[@]} | grep -iE '2\.f(ast)?q\.gz' 2> /dev/null | tr '\n' ' ') || echo '')
     if [[ ! -z ${FASTQ_DIR} ]]; then
       FASTQ_DIR="${FASTQ_DIR}/*"
       R1d=$(readlink -f ${FASTQ_DIR} | grep -iE '1\.f(ast)?q\.gz' 2> /dev/null | tr '\n' ' ')
@@ -246,7 +260,7 @@ for k in $(seq ${K_MIN} ${K_STEP} ${K_MAX} ); do
   if [ ! -f ${FILE}.kmc_pre ] || [ ${OVERWRITE2} == true ]; then
     report "INFO" "Counting ${k}-mers in reads..." ${TO_KMERIZE[@]}
     set -o pipefail && ${DIR}/count_kmers.sh -k ${k} -b ${OUTBASE#${WD}/DBs/}_${K_BAIT} -d ${WD}/DBs -m ${MAX_KMER_FREQ} \
-    -t ${THREADS} -S ${MEM} -L ${MIN_KMER_FREQ} -U ${MAX_KMER_FREQ} -O ${TO_KMERIZE[@]}  \
+    -t ${THREADS} -S ${MEM} -L ${MIN_KMER_FREQ} -U ${MAX_KMER_FREQ} -O ${TO_KMERIZE[@]} ${KMC_IN_RAM} \
     || exit 1
   else
     report "WARNING" "${FILE} already exists, use the -O flag to overwrite " | tee -a ${LOGFILE}
@@ -286,19 +300,3 @@ if [ ! -f ${OUTFILE} ] || [ ${OVERWRITE3} == true ]; then
 else
   report "WARNING" "${OUTFILE} already exists, use the -R flag to overwrite "
 fi
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
