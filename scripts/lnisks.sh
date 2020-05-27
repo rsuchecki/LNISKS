@@ -746,14 +746,54 @@ else
         FILES+=("-i")
         FILES+=(${F})
       done
-      set -o pipefail && ${DIR}/targeted_extend.sh \
-      -s ${!tFNAME} -F ${!tFREQ} -k ${KEXTEND_K_BAIT} \
-      -m ${KEXTEND_K_MIN} -M ${KEXTEND_K_MAX} -S ${KEXTEND_K_STEP} \
-      ${FILES[@]} ${NOBAIT} ${INFER_FREQ_EXTEND} -E ${MEM} \
-      -t ${THREADS} ${OV} ${KMC_IN_RAM} || exit 1
+      EXTROUNDS=2
+      # NEXTEXT=${!tFNAME%.fa}_EXT1.fa
+      # cp ${tFNAME} ${NEXTEXT}
+
+      # #EXTEND ONCE
+      # set -o pipefail && ${DIR}/targeted_extend.sh \
+      #   -s ${!tFNAME} -F ${!tFREQ} -k ${KEXTEND_K_BAIT} \
+      #   -m ${KEXTEND_K_MIN} -M ${KEXTEND_K_MAX} -S ${KEXTEND_K_STEP} \
+      #   ${FILES[@]} ${NOBAIT} ${INFER_FREQ_EXTEND} -E ${MEM} \
+      #   -t ${THREADS} ${OV} ${KMC_IN_RAM} || exit 1
+
+      # NEXTEXT=${!tFNAME%.fa}_TOEXT.fa
+      # # cp ${!tFNAME%.fa}.catch_k${KEXTEND_K_BAIT}.k_${KEXTEND_K_MIN}_${KEXTEND_K_STEP}_${KEXTEND_K_MAX}.fasta ${!tFNAME%.fa}_E${ROUND}.fa
+      # cp ${!tFNAME%.fa}.catch_k${KEXTEND_K_BAIT}.k_${KEXTEND_K_MIN}_${KEXTEND_K_STEP}_${KEXTEND_K_MAX}.fasta ${NEXTEXT}
+
+
+      NEXTEXT=${!tFNAME%.fa}_EXT1.fa
+      cp ${!tFNAME} ${NEXTEXT}
+
+      #ADDITIONAL BAIT-AND-EXTEND ROUNDS
+      for ROUND in $(seq 1 ${EXTROUNDS}); do
+        set -o pipefail && ${DIR}/targeted_extend.sh \
+        -s ${NEXTEXT} -F ${!tFREQ} -k ${KEXTEND_K_BAIT} \
+        -m ${KEXTEND_K_MIN} -M ${KEXTEND_K_MAX} -S ${KEXTEND_K_STEP} \
+        ${FILES[@]} ${NOBAIT} ${INFER_FREQ_EXTEND} -E ${MEM} \
+        -t ${THREADS} ${OV} ${KMC_IN_RAM} || exit 1
+        # echo ${!tFNAME}
+        echo ${NEXTEXT%_EXT${ROUND}.fa}.catch_k${KEXTEND_K_BAIT}.k_${KEXTEND_K_MIN}_${KEXTEND_K_STEP}_${KEXTEND_K_MAX}.fasta
+        rm ${NEXTEXT}
+        PREVEXT=${NEXTEXT}
+        NEXTEXT=${!tFNAME%.fa}_EXT$((ROUND+1)).fa
+        cp ${PREVEXT%.fa}.catch_k${KEXTEND_K_BAIT}.k_${KEXTEND_K_MIN}_${KEXTEND_K_STEP}_${KEXTEND_K_MAX}.fasta
+        exit 1
+        # NEXTEXT =
+        # mv "${!tFNAME%}.catch"
+        # if [ "${ROUND}" -lt "${EXTROUNDS}" ]; then
+        #   cp ${NEXTEXT%_TOEXT.fa}.catch_k${KEXTEND_K_BAIT}.k_${KEXTEND_K_MIN}_${KEXTEND_K_STEP}_${KEXTEND_K_MAX}.fasta
+
+        # fi
+      done
     done
   done
 fi
+
+# output/25-mers/25-mers_A_thaliana_MINUS_O_sativa_extended.matched_EXT1.catch_k25.k_25_10_50.fasta
+# output/25-mers/25-mers_A_thaliana_MINUS_O_sativa_extended.matched.catch_k25.k_25_10_50.fasta
+# output/25-mers/25-mers_A_thaliana_MINUS_O_sativa_extended.matched.catch_k25.k_25_10_50.fasta
+
 #((STEP++))
 #((STEP++))
 
@@ -782,9 +822,3 @@ fi
 ########################################################################################
 
 report "INFO" "Pipeline run completed"
-
-
-
-
-
-
