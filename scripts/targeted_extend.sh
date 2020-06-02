@@ -3,6 +3,10 @@ set -eo pipefail #http://redsymbol.net/articles/unofficial-bash-strict-mode/
 
 DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 
+export YAKAT="yakat"
+export PATH="${PATH}:"$(pwd)"/bin"
+
+
 
 #THREADS=$(echo "$(nproc) /4" | bc )
 #THREADS=$([[ ${THREADS} -ge "4" ]] && echo "${THREADS}" || echo "4") #ensure not less than 4
@@ -59,7 +63,7 @@ where:
   -m <int>        extending k minimum (defaults to ${K_MIN})
   -M <int>        extending k maximum (defaults to ${K_MAX})
   -S <int>        extending k step (defaults to ${K_STEP})
-  -I              infer min frequency of a kmer to be used for extending
+  -I              infer min frequency of a kmer to be used for extending - only makes sense with -B
   -f <int>        min frequency of a kmer to be used for extending (defaults to ${MIN_KMER_FREQ})
   -F <int>        max frequency of a kmer to be used for extending (defaults to ${MAX_KMER_FREQ})
   -t <int>        number of threads for parallelized tasks (defaults to max(4,(nproc/4=${THREADS}))
@@ -106,7 +110,10 @@ done
 
 report "INFO" "Overwrite settigns: (1)=${OVERWRITE1} (2)=${OVERWRITE2} (3)=${OVERWRITE3}"
 
-#exit 1
+if [ ${BAIT} == false ] || [ ${INFER_MIN_FREQ} == true ]; then
+  report "ERROR" "Inferring k-mer frequency from a set of baited reads is not supported. The -I flag can only be used in conjunction with -B." >&2
+  exit 1
+fi
 
 if [ -z ${SEEDS_FASTA} ] || ([ -z ${K_BAIT} ] && [ ${BAIT} == true ] ); then
   report "ERROR" "Required option not specified by the user, terminating!!!" >&2
@@ -166,7 +173,6 @@ CATCH_SE=${OUTBASE}${K_BAIT}_SE.fastq.gz
 CATCH_R1=${OUTBASE}${K_BAIT}_R1.fastq.gz
 CATCH_R2=${OUTBASE}${K_BAIT}_R2.fastq.gz
 
-echo ${CATCH_R1} ${CATCH_R2} ${CATCH_SE}
 
 report "INFO" "Targeted extending initiated, k=({k_i, K_{i-1}+${K_STEP},...,k_j} | ${K_MIN}<=k<=${K_MAX}), MIN_KMER_FREQ=${MIN_KMER_FREQ}, MAX_KMER_FREQ=${MAX_KMER_FREQ}"
 
@@ -183,13 +189,12 @@ if [[ ${BAIT} == true ]]; then
 # BAIT SE
   if [ ! -f ${CATCH_SE} ] || [ ${OVERWRITE1} == true ]; then
     SE=$((ls ${FASTQ_FILES[@]} | fgrep -i SE.fastq.gz | tr '\n' ' ') || echo '' )
-    report "info" "Here"
     if [[ ! -z ${FASTQ_DIR} ]]; then
       FASTQ_DIR="${FASTQ_DIR}/*"
       SEd=$(readlink -f ${FASTQ_DIR} | grep -iE f(ast)?q.gz | grep -viE '(1|2)\.f(ast)?q\.gz' | tr '\n' ' ')
       report "INFO" "INFILES: ${SEd}"
-    else
-      report "INFO" "No FASTQ dir?"
+    # else
+    #   report "INFO" "No FASTQ dir?"
     fi
     if [[ ! -z ${SE} ]] || [[ ! -z ${SEd} ]]; then
       set -o pipefail && pigz -dcp2 ${SE} ${SEd} | paste - - - - \
@@ -198,8 +203,8 @@ if [[ ${BAIT} == true ]]; then
         --threads ${THREADS} --print-user-settings \
       | tr '\t' '\n' | pigz -9cp8 > ${CATCH_SE} \
       || exit 1
-    else
-      report "INFO" "No FASTQ dir OR FASTQ files?"
+    # else
+    #   report "INFO" "No FASTQ dir OR FASTQ files?"
     fi
   fi
 # BAIT PE
@@ -247,7 +252,6 @@ else # NO BAITING, JUST KMERIZE INPUT READS
   fi
 fi
 
-#echo "TODO: k-mer counting gets re-done every time - FIX"
 
 #######################################################################################
 #XXX  k-merize for each k
@@ -257,6 +261,7 @@ for k in $(seq ${K_MIN} ${K_STEP} ${K_MAX} ); do
   FILE=${WD}/DBs/${k}-mers_${OUTFILE0%.fasta}.catch_k_${K_BAIT}.db
 #  echo $(ls ${FILE}.kmc_pre)
 #  echo "OV2 ${OVERWRITE2} ${FILE}"
+
   if [ ! -f ${FILE}.kmc_pre ] || [ ${OVERWRITE2} == true ]; then
     report "INFO" "Counting ${k}-mers in reads..." ${TO_KMERIZE[@]}
     set -o pipefail && ${DIR}/count_kmers.sh -k ${k} -b ${OUTBASE#${WD}/DBs/}_${K_BAIT} -d ${WD}/DBs -m ${MAX_KMER_FREQ} \

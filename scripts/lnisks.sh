@@ -55,6 +55,8 @@ FILTER_HT_FILES=()
 
 KEXTEND_K_STEP=10
 INFER_MIN_FREQ_EXTEND=false
+KEXTEND_ROUNDS=3
+KEXTEND_NO_BAIT=false
 
 #Long, unpaired
 MIN_LONG=250
@@ -108,11 +110,12 @@ usage="USAGE: $(basename $0) [-h] -k <int> -j <int> -M <fastq.gz> -W <fastq.gz> 
   -D <float>      min identity (0.0<=id<=1.0) required when calling snps (default: 1-2/(2k-1))
 [Further extensions of paired seeds - disabled by default, see -S]
   -B              k-merize all input reads (no baiting), suitable for small input datasets and/or big memory machines
-  -J              infer min k-mer frequency for further extensions from distribution
-  -b <int>        baiting k-mer length (default equals j-mer length)
-  -n <int>        min extension k-mer size (default equals k)
+  -J              infer min k-mer frequency for further extensions from distribution (only works with -B)
+  -b <int>        baiting k-mer length (default equals j or k-1 if j not set)
+  -n <int>        min extension k-mer size (default equals k/2)
   -N <int>        max extension k-mer size (default equals 2k)
   -e <int>        extension k-mer size step (default: ${KEXTEND_K_STEP})
+  -c <int>        (bait and) extend rounds (default: ${KEXTEND_ROUNDS})
 [Runtime, skipping, stopping]
   -C <int>        Print width for some reports, recommended use: -C \$COLUMNS (defaults to ${COLUMNS})
   -t <int>        number of threads for parallelized tasks (defaults to max(4,nproc/4: ${THREADS})
@@ -147,7 +150,7 @@ usage="USAGE: $(basename $0) [-h] -k <int> -j <int> -M <fastq.gz> -W <fastq.gz> 
 
 
 ALLARGS=()
-while getopts ":hriIzk:j:o:M:m:W:w:Q:q:P:p:X:x:F:f:Y:y:d:D:BJb:n:N:e:t:T:C:E:O:L:s:S:" opt; do
+while getopts ":hriIzk:j:o:M:m:W:w:Q:q:P:p:X:x:F:f:Y:y:d:D:BJb:n:N:e:c:t:T:C:E:O:L:s:S:" opt; do
   ALLARGS+=("-"${opt} ${OPTARG})
 #  echo "PARSING -${opt} ${OPTARG}"
   case $opt in
@@ -181,6 +184,7 @@ while getopts ":hriIzk:j:o:M:m:W:w:Q:q:P:p:X:x:F:f:Y:y:d:D:BJb:n:N:e:t:T:C:E:O:L
     n) KEXTEND_K_MIN=${OPTARG};;
     N) KEXTEND_K_MAX=${OPTARG};;
     e) KEXTEND_K_STEP=${OPTARG};;
+    c) KEXTEND_ROUNDS=${OPTARG};;
     C) COLUMNS=${OPTARG};;
     t) THREADS=${OPTARG};;
     T) TMPDIR=${OPTARG};; ##TODO USE mkdtemp
@@ -214,17 +218,17 @@ if [ -z ${KEXTEND_K_BAIT} ]; then
   if [ ! -z ${j} ]; then
     KEXTEND_K_BAIT=${j}
   else
-    KEXTEND_K_BAIT=${k}
+    KEXTEND_K_BAIT=$((k-1))
   fi
 fi
 if [ -z ${KEXTEND_K_MIN} ]; then
-  KEXTEND_K_MIN=${k}
+  KEXTEND_K_MIN=$((k/2))
 fi
 if [ -z ${KEXTEND_K_MAX} ]; then
   KEXTEND_K_MAX=$((${k}+${k}))
 fi
 
-for arg in ${k} ${OVERWRITE_FROM_STEP} ${SKIP_FIRST_STEPS} ${STOP_AFTER_STEP} ${KEXTEND_K_BAIT} ${KEXTEND_K_MIN} ${KEXTEND_K_MAX} ${KEXTEND_K_STEP} ${COLUMNS}; do
+for arg in ${k} ${OVERWRITE_FROM_STEP} ${SKIP_FIRST_STEPS} ${STOP_AFTER_STEP} ${KEXTEND_K_BAIT} ${KEXTEND_K_MIN} ${KEXTEND_K_MAX} ${KEXTEND_K_STEP} ${COLUMNS} ${KEXTEND_ROUNDS}; do
   numeric='^[0-9]+$'
   if ! [[ "${arg}" =~ $re ]] ; then
     report "ERROR" "Numeric value expected, offending argument: ${arg}" >&2
@@ -295,6 +299,13 @@ if [[ ${WT_NAME} == *['!'@#\$%^\&*()+/.]* ]]; then
   report "ERROR" "Special characters not allowed in sample name (offending argument: -m ${WT_NAME}), terminating!" >&2
   exit 1
 fi
+
+
+if [ ${KEXTEND_NO_BAIT} == false ] || [ ${INFER_MIN_FREQ_EXTEND} == true ]; then
+  report "ERROR" "Inferring k-mer frequency from a set of baited reads is not supported. The -J flag can only be used in conjunction with -B." >&2
+  exit 1
+fi
+
 
 WD="${OUTDIR}/${k}-mers"
 mkdir -p ${WD}/logs
@@ -453,7 +464,7 @@ else
     # WT_MIN_FREQ_OUT=$(awk -v prev=99999999999 '{if ($2>prev){print $1-1; exit}; prev=$2}' ${WT_HISTO})
     # #MAX_PRINT2=$(sort -k2,2nr ${WT_HISTO} | head -1 | cut -f1)
     MAX_PRINT2=$(awk -vMIN=${WT_MIN_FREQ_OUT} -vPREV=0 '{if ($1>MIN && $2<prev){print $1-1; exit}; prev=$2}' ${WT_HISTO})
-    ./scripts/plot_histogram.sh ${WT_HISTO} ${COLUMNS} | tee ${WT_HISTO}.plot | awk -vM="${MAX_PRINT2}" 'NR<=(M*2)'
+    ./scripts/plot_histogram.sh ${WT_HISTO} ${COLUMNS} | tee ${WT_HISTO}.plot | awk -vM="${MAX_PRINT2}" 'NR<=(M*3)'
     report "INFO" "Estimated minimum frequency for ${WT_NAME} k-mers to be included: ${WT_MIN_FREQ_OUT}, see ${WT_HISTO}.plot"
   fi
 fi
@@ -746,7 +757,7 @@ else
         FILES+=("-i")
         FILES+=(${F})
       done
-      EXTROUNDS=2
+
       # NEXTEXT=${!tFNAME%.fa}_EXT1.fa
       # cp ${tFNAME} ${NEXTEXT}
 
@@ -766,26 +777,27 @@ else
       cp ${!tFNAME} ${NEXTEXT}
 
       #ADDITIONAL BAIT-AND-EXTEND ROUNDS
-      for ROUND in $(seq 1 ${EXTROUNDS}); do
+      for ROUND in $(seq 1 ${KEXTEND_ROUNDS}); do
         set -o pipefail && ${DIR}/targeted_extend.sh \
         -s ${NEXTEXT} -F ${!tFREQ} -k ${KEXTEND_K_BAIT} \
         -m ${KEXTEND_K_MIN} -M ${KEXTEND_K_MAX} -S ${KEXTEND_K_STEP} \
         ${FILES[@]} ${NOBAIT} ${INFER_FREQ_EXTEND} -E ${MEM} \
         -t ${THREADS} ${OV} ${KMC_IN_RAM} || exit 1
         # echo ${!tFNAME}
-        echo ${NEXTEXT%_EXT${ROUND}.fa}.catch_k${KEXTEND_K_BAIT}.k_${KEXTEND_K_MIN}_${KEXTEND_K_STEP}_${KEXTEND_K_MAX}.fasta
+        # echo ${NEXTEXT%_EXT${ROUND}.fa}.catch_k${KEXTEND_K_BAIT}.k_${KEXTEND_K_MIN}_${KEXTEND_K_STEP}_${KEXTEND_K_MAX}.fasta
         rm ${NEXTEXT}
         PREVEXT=${NEXTEXT}
         NEXTEXT=${!tFNAME%.fa}_EXT$((ROUND+1)).fa
-        cp ${PREVEXT%.fa}.catch_k${KEXTEND_K_BAIT}.k_${KEXTEND_K_MIN}_${KEXTEND_K_STEP}_${KEXTEND_K_MAX}.fasta
-        exit 1
+        cp ${PREVEXT%.fa}.catch_k${KEXTEND_K_BAIT}.k_${KEXTEND_K_MIN}_${KEXTEND_K_STEP}_${KEXTEND_K_MAX}.fasta ${NEXTEXT}
         # NEXTEXT =
         # mv "${!tFNAME%}.catch"
-        # if [ "${ROUND}" -lt "${EXTROUNDS}" ]; then
+        # if [ "${ROUND}" -lt "${KEXTEND_ROUNDS}" ]; then
         #   cp ${NEXTEXT%_TOEXT.fa}.catch_k${KEXTEND_K_BAIT}.k_${KEXTEND_K_MIN}_${KEXTEND_K_STEP}_${KEXTEND_K_MAX}.fasta
 
         # fi
       done
+      rm ${NEXTEXT}
+      unset NEXTEXT
     done
   done
 fi
