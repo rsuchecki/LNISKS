@@ -200,7 +200,7 @@ if [[ ${BAIT} == true ]]; then
       set -o pipefail && pigz -dcp2 ${SE} ${SEd} | paste - - - - \
       |  ${YAKAT} kmatch --JVM "-Xms${MEM}G -Xmx${MEM}G" \
         --k-mer-length ${K_BAIT} --k-mers <(tr -d '-' < ${SEEDS_FASTA}) \
-        --threads ${THREADS} --print-user-settings \
+        --threads ${THREADS} \
       | tr '\t' '\n' | pigz -9cp8 > ${CATCH_SE} \
       || exit 1
     # else
@@ -222,7 +222,7 @@ if [[ ${BAIT} == true ]]; then
         <(pigz -dcp2 ${R2} ${R2d} | paste - - - -) \
       |  ${YAKAT} kmatch --JVM "-Xms${MEM}G -Xmx${MEM}G" \
         --k-mer-length ${K_BAIT} --k-mers <(tr -d '-' < ${SEEDS_FASTA})  \
-        --threads ${THREADS} --print-user-settings \
+        --threads ${THREADS} \
       | tee >(cut -f 1-4 -d$'\t' | tr '\t' '\n' | pigz -9cp8 > ${CATCH_R1}) \
       | cut -f 5-8 -d$'\t' | tr '\t' '\n' | pigz -9cp8 > ${CATCH_R2} \
       || exit 1

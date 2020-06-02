@@ -618,7 +618,7 @@ else
     set -o pipefail && paste - - < ${WT_TOEXTEND%%.*}_extended.fa \
     | ${YAKAT} --JVM "-Xms${MEM}G -Xmx${MEM}G" kmatch \
     --k-mer-length ${j} --k-mers ${MT_TOEXTEND%%.*}_extended.fa  \
-    --threads ${THREADS} --print-user-settings \
+    --threads ${THREADS} \
     | tr '\t' '\n' > ${WT_MATCHING} \
     && report "INFO" "Finished j-filtering ${WT_NAME}" \
     || (report "ERROR" "Failed j-filtering ${WT_NAME}" && exit 1)
@@ -631,7 +631,7 @@ else
     set -o pipefail && paste - - < ${MT_TOEXTEND%%.*}_extended.fa \
     | ${YAKAT} --JVM "-Xms${MEM}G -Xmx${MEM}G" kmatch \
     --k-mer-length ${j} --k-mers ${WT_TOEXTEND%%.*}_extended.fa  \
-    --threads ${THREADS} --print-user-settings \
+    --threads ${THREADS} \
     | tr '\t' '\n' > ${MT_MATCHING} \
     && report "INFO" "Finished j-filtering ${MT_NAME}"  \
     || (report "ERROR" "Failed j-filtering ${MT_NAME}" && exit 1)

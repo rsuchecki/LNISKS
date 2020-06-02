@@ -41,15 +41,15 @@ bioRxiv 580829; doi: https://doi.org/10.1101/580829
 
 After you download the latest release or clone this repository go to LNISKS directory, and install/download the following:
 
-* Linux toolkit including `gawk, bc, column,` [`pigz`](https://zlib.net/pigz/) - e.g. on debian 
-  
+* Linux toolkit including `gawk, bc, column,` [`pigz`](https://zlib.net/pigz/) - e.g. on debian
+
   ```
   sudo apt install -y pigz \
       gawk \
       bc \
       bsdmainutils
   ```
-  
+
 * [KMC3](https://github.com/refresh-bio/KMC) should be available on PATH or downloaded into `bin/` as follows:
   ```
   mkdir -p bin \
@@ -97,7 +97,7 @@ Finally, we use `-C $COLUMNS` to ensure that ascii plots make best use of the av
   -w O_sativa \
   -t 2 \
   -I -i \
-  -C $COLUMNS
+  -C $COLUMNS \
   -S 10
 ```
 
@@ -106,7 +106,7 @@ All this information with additional detail on parameters used can be found in t
 
 ### Example run using docker
 
-Adjust version as required 
+Adjust version as required
 
 ```
 LNISKS_VERSION=1.1.0
