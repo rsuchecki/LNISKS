@@ -197,14 +197,14 @@ else
 
 ###XXX histogram of alignment lengths
   report "INFO" "Cluster alignment lenghts histogram: "
-  set -o pipefail && ./scripts/vcluster_length_distribution.sh ${SNPS_LIST} ${COLUMNS}
+  set -o pipefail && ${SCRIPTSDIR}/vcluster_length_distribution.sh ${SNPS_LIST} ${COLUMNS}
 
 
     #XXX frequency of numbers of SNPs per CLUSTER
   report "INFO" "Frequencies of SNPs numbers per cluster: "
   set -o pipefail && echo -e "num_snps\tfrequency" \
   && tail -n+2 ${SNPS_LIST} | cut -f1 | sort | uniq -c | awk '{print $1}' | sort -n | uniq -c | awk '{print $2"\t"$1}' \
-  | ./scripts/number_format.sh | column -t
+  | ${SCRIPTSDIR}/number_format.sh | column -t
 
   #XXX classes A,B,C based on distance of SNPs from ends
   cat ${SNPS_LIST} | awk -v k=${k} -v o1=${SNPS_LIST}.A -v o2=${SNPS_LIST}.B -v o3=${SNPS_LIST}.C  \

@@ -2,10 +2,12 @@
 DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 
 
+
+
 #UPDATE AS NECESSARY
 # export YAKAT="${DIR}/yakat.jar"
 export YAKAT="yakat"
-export PATH="${PATH}:"$(pwd)"/bin"
+export PATH="${PATH}:${DIR%/scripts}/bin"
 
 #RESOURCES
 THREADS=$(echo "$(nproc) /4" | bc )
@@ -56,7 +58,7 @@ FILTER_HT_FILES=()
 KEXTEND_K_STEP=10
 INFER_MIN_FREQ_EXTEND=false
 KEXTEND_ROUNDS=3
-KEXTEND_NO_BAIT=false
+KEXTEND_BAIT=true
 
 #Long, unpaired
 MIN_LONG=250
@@ -178,7 +180,7 @@ while getopts ":hriIzk:j:o:M:m:W:w:Q:q:P:p:X:x:F:f:Y:y:d:D:BJb:n:N:e:c:t:T:C:E:O
     y) WT_FILTER_MIN_FREQ=${OPTARG};;
     d) MIN_ID1=${OPTARG};;
     D) MIN_ID2=${OPTARG};;
-    B) KEXTEND_NO_BAIT=true;;
+    B) KEXTEND_BAIT=false;;
     J) INFER_MIN_FREQ_EXTEND=true;;
     b) KEXTEND_K_BAIT=${OPTARG};;
     n) KEXTEND_K_MIN=${OPTARG};;
@@ -301,7 +303,7 @@ if [[ ${WT_NAME} == *['!'@#\$%^\&*()+/.]* ]]; then
 fi
 
 
-if [ ${KEXTEND_NO_BAIT} == false ] || [ ${INFER_MIN_FREQ_EXTEND} == true ]; then
+if [ ${KEXTEND_BAIT} == true ] && [ ${INFER_MIN_FREQ_EXTEND} == true ]; then
   report "ERROR" "Inferring k-mer frequency from a set of baited reads is not supported. The -J flag can only be used in conjunction with -B." >&2
   exit 1
 fi
@@ -437,7 +439,7 @@ else
     # MAX_PRINT1=$(awk -vMIN=${MT_MIN_FREQ_OUT} -vPREV=0 '{if ($1>MIN && $2<prev){print $1-1; exit}; prev=$2}' ${MT_HISTO})
     # #MAX_PRINT1=$(sort -k2,2nr ${MT_HISTO} | head -1 | cut -f1)
     MAX_PRINT1=$(awk -vMIN=${MT_MIN_FREQ_OUT} -vPREV=0 '{if ($1>MIN && $2<prev){print $1-1; exit}; prev=$2}' ${MT_HISTO})
-    ./scripts/plot_histogram.sh ${MT_HISTO} ${COLUMNS} | tee ${MT_HISTO}.plot | awk -vM="${MAX_PRINT1}" 'NR<=(M*3)'
+    ${DIR}/plot_histogram.sh ${MT_HISTO} ${COLUMNS} | tee ${MT_HISTO}.plot | awk -vM="${MAX_PRINT1}" 'NR<=(M*3)'
     report "INFO" "Estimated minimum frequency for ${MT_NAME} k-mers to be included: ${MT_MIN_FREQ_OUT}, see ${MT_HISTO}.plot"
 
 
@@ -464,7 +466,7 @@ else
     # WT_MIN_FREQ_OUT=$(awk -v prev=99999999999 '{if ($2>prev){print $1-1; exit}; prev=$2}' ${WT_HISTO})
     # #MAX_PRINT2=$(sort -k2,2nr ${WT_HISTO} | head -1 | cut -f1)
     MAX_PRINT2=$(awk -vMIN=${WT_MIN_FREQ_OUT} -vPREV=0 '{if ($1>MIN && $2<prev){print $1-1; exit}; prev=$2}' ${WT_HISTO})
-    ./scripts/plot_histogram.sh ${WT_HISTO} ${COLUMNS} | tee ${WT_HISTO}.plot | awk -vM="${MAX_PRINT2}" 'NR<=(M*3)'
+    ${DIR}/plot_histogram.sh ${WT_HISTO} ${COLUMNS} | tee ${WT_HISTO}.plot | awk -vM="${MAX_PRINT2}" 'NR<=(M*3)'
     report "INFO" "Estimated minimum frequency for ${WT_NAME} k-mers to be included: ${WT_MIN_FREQ_OUT}, see ${WT_HISTO}.plot"
   fi
 fi
@@ -736,7 +738,7 @@ else
     KMC_IN_RAM="-r"
   fi
 
-  if [[ ${KEXTEND_NO_BAIT} == true ]]; then
+  if [[ ${KEXTEND_BAIT} == false ]]; then
     NOBAIT="-B"
   fi
 

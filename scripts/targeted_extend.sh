@@ -4,7 +4,7 @@ set -eo pipefail #http://redsymbol.net/articles/unofficial-bash-strict-mode/
 DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 
 export YAKAT="yakat"
-export PATH="${PATH}:"$(pwd)"/bin"
+# export PATH="${PATH}:"$(pwd)"/bin"
 
 
 
