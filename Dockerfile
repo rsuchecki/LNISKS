@@ -9,8 +9,8 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 ENV KMC_VER=3.1.1
-ENV VSEARCH_VER=2.14.1
-ENV YAKAT_VER=0.9.2
+ENV VSEARCH_VER=2.17.0
+ENV YAKAT_VER=0.9.3
 
 WORKDIR /usr/bin
 
@@ -28,7 +28,7 @@ RUN wget https://github.com/refresh-bio/KMC/releases/download/v${KMC_VER}/KMC${K
 
 COPY scripts .
 
-#COPY example /example 
+#COPY example /example
 
 WORKDIR /
 

@@ -1,6 +1,6 @@
 [![DOI](https://zenodo.org/badge/161273660.svg)](https://zenodo.org/badge/latestdoi/161273660)
 [![Latest GitHub tag](https://img.shields.io/github/tag/rsuchecki/LNISKS.svg?label=latest%20release&logo=github)](https://github.com/rsuchecki/LNISKS/releases)
-[![GitHub commits since latest release](https://img.shields.io/github/commits-since/rsuchecki/LNISKS/latest.svg?logo=github)](https://github.com/plantinformatics/pretzel-input-generator/releases)
+[![GitHub commits since latest release](https://img.shields.io/github/commits-since/rsuchecki/LNISKS/latest.svg?logo=github)](https://github.com/rsuchecki/LNISKS/releases)
 
 [![Docker Cloud Build Status](https://img.shields.io/docker/cloud/build/rsuchecki/lnisks?logo=docker)](https://hub.docker.com/r/rsuchecki/lnisks)
 [![Docker Cloud Automated build](https://img.shields.io/docker/cloud/automated/rsuchecki/lnisks?logo=docker&label=docker%20build%20from%20tags)](https://hub.docker.com/r/rsuchecki/lnisks)
@@ -63,17 +63,16 @@ After you download the latest release or clone this repository go to LNISKS dire
   ```
   mkdir -p bin \
     && cd bin \
-    && wget https://github.com/torognes/vsearch/releases/download/v2.14.1/vsearch-2.14.1-linux-x86_64.tar.gz \
-    && tar xzvf vsearch-2.14.1-linux-x86_64.tar.gz \
-    && mv vsearch-2.14.1-linux-x86_64/bin/vsearch . \
-    && rm -r vsearch-2.14.1-linux-x86_64* \
+    && wget https://github.com/torognes/vsearch/releases/download/v2.14.1/vsearch-2.17.0-linux-x86_64.tar.gz \
+    && tar xzvf vsearch-2.17.0-linux-x86_64.tar.gz \
+    && mv vsearch-2.17.0-linux-x86_64/bin/vsearch . \
+    && rm -r vsearch-2.17.0-linux-x86_64* \
     && cd ..
   ```
 * [`yakat`](https://github.com/rsuchecki/yakat) - `yakat.jar` should be placed in `scripts/`
   ```
-  wget --directory-prefix scripts/ https://github.com/rsuchecki/yakat/releases/download/v0.9.2/yakat.jar
+  wget --directory-prefix scripts/ https://github.com/rsuchecki/yakat/releases/download/v0.9.3/yakat.jar
   ```
-
 
 ## Quick-start
 
@@ -109,7 +108,7 @@ All this information with additional detail on parameters used can be found in t
 Adjust version as required
 
 ```
-LNISKS_VERSION=1.1.0
+LNISKS_VERSION=1.1.1
 docker run \
   -v "$PWD":"$PWD" \
   -w "$PWD"  \
