@@ -108,7 +108,7 @@ All this information with additional detail on parameters used can be found in t
 Adjust version as required
 
 ```
-LNISKS_VERSION=1.1.1
+LNISKS_VERSION=1.1.2
 docker run \
   -v "$PWD":"$PWD" \
   -w "$PWD"  \
