@@ -63,7 +63,7 @@ After you download the latest release or clone this repository go to LNISKS dire
   ```
   mkdir -p bin \
     && cd bin \
-    && wget https://github.com/torognes/vsearch/releases/download/v2.14.1/vsearch-2.17.0-linux-x86_64.tar.gz \
+    && wget https://github.com/torognes/vsearch/releases/download/v2.17.0/vsearch-2.17.0-linux-x86_64.tar.gz \
     && tar xzvf vsearch-2.17.0-linux-x86_64.tar.gz \
     && mv vsearch-2.17.0-linux-x86_64/bin/vsearch . \
     && rm -r vsearch-2.17.0-linux-x86_64* \
