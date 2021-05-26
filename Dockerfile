@@ -14,7 +14,11 @@ ENV YAKAT_VER=0.9.3
 
 WORKDIR /usr/bin
 
-RUN wget https://github.com/refresh-bio/KMC/releases/download/v${KMC_VER}/KMC${KMC_VER}.linux.tar.gz \
+RUN apt-get -qq update && apt-get -qq -y install --no-install-recommends procps \
+  && apt-get -qq -y autoremove \
+  && apt-get autoclean \
+  && rm -rf /var/lib/apt/lists/* /var/log/dpkg.log \
+  && wget https://github.com/refresh-bio/KMC/releases/download/v${KMC_VER}/KMC${KMC_VER}.linux.tar.gz \
   && tar xzvf KMC${KMC_VER}.linux.tar.gz \
   && rm KMC${KMC_VER}.linux.tar.gz \
   && wget https://github.com/torognes/vsearch/releases/download/v${VSEARCH_VER}/vsearch-${VSEARCH_VER}-linux-x86_64.tar.gz \
@@ -23,6 +27,7 @@ RUN wget https://github.com/refresh-bio/KMC/releases/download/v${KMC_VER}/KMC${K
   && rm -r vsearch-${VSEARCH_VER}-linux-x86_64* \
   && wget https://github.com/rsuchecki/yakat/releases/download/v${YAKAT_VER}/yakat \
   && chmod +x yakat
+
 
 #WORKDIR /LNISKS
 
