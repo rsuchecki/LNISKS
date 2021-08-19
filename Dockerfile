@@ -10,7 +10,7 @@ RUN apt-get update \
 
 ENV KMC_VER=3.1.1
 ENV VSEARCH_VER=2.17.0
-ENV YAKAT_VER=0.9.4
+ENV YAKAT_VER=0.9.5
 
 WORKDIR /usr/bin
 

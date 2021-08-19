@@ -20,7 +20,6 @@
 - [Command line options](#command-line-options)
   - [Run-time, skipping, stopping](#run-time-skipping-stopping)
 
-
 ## About LNISKS
 
 LNISKS (longer needle in a scanter _k_-stack) is a high-throughput pipeline developed for reference free mutation identification.
@@ -41,17 +40,18 @@ bioRxiv 580829; doi: https://doi.org/10.1101/580829
 
 After you download the latest release or clone this repository go to LNISKS directory, and install/download the following:
 
-* Linux toolkit including `gawk, bc, column,` [`pigz`](https://zlib.net/pigz/) - e.g. on debian
+- Linux toolkit including `gawk, bc, column,` [`pigz`](https://zlib.net/pigz/) - e.g. on debian
 
-  ```
+  ```sh
   sudo apt install -y pigz \
       gawk \
       bc \
       bsdmainutils
   ```
 
-* [KMC3](https://github.com/refresh-bio/KMC) should be available on PATH or downloaded into `bin/` as follows:
-  ```
+- [KMC3](https://github.com/refresh-bio/KMC) should be available on PATH or downloaded into `bin/` as follows:
+
+  ```sh
   mkdir -p bin \
     && cd bin \
     && wget https://github.com/refresh-bio/KMC/releases/download/v3.1.1/KMC3.1.1.linux.tar.gz \
@@ -59,8 +59,10 @@ After you download the latest release or clone this repository go to LNISKS dire
     && rm KMC3.1.1.linux.tar.gz \
     && cd ..
   ```
-* [VSEARCH](https://github.com/torognes/vsearch) should be available on PATH or or downloaded into `bin/` as follows:
-  ```
+
+- [VSEARCH](https://github.com/torognes/vsearch) should be available on PATH or or downloaded into `bin/` as follows:
+
+  ```sh
   mkdir -p bin \
     && cd bin \
     && wget https://github.com/torognes/vsearch/releases/download/v2.17.0/vsearch-2.17.0-linux-x86_64.tar.gz \
@@ -69,9 +71,12 @@ After you download the latest release or clone this repository go to LNISKS dire
     && rm -r vsearch-2.17.0-linux-x86_64* \
     && cd ..
   ```
-* [`yakat`](https://github.com/rsuchecki/yakat) - `yakat.jar` should be placed in `scripts/`
-  ```
-  wget --directory-prefix scripts/ https://github.com/rsuchecki/yakat/releases/download/v0.9.3/yakat.jar
+
+- [`yakat`](https://github.com/rsuchecki/yakat) - `yakat` should be placed under `bin/`
+
+  ```sh
+  wget --directory-prefix bin/ https://github.com/rsuchecki/yakat/releases/download/v0.9.5/yakat
+  chmod +x bin/yakat
   ```
 
 ## Quick-start
@@ -79,7 +84,6 @@ After you download the latest release or clone this repository go to LNISKS dire
 ### Example data
 
 To provide a minimal test set for the pipeline we used [ART read simulator](https://doi.org/10.1093/bioinformatics/btr708) within [RNF framework](https://doi.org/10.1093/bioinformatics/btv524) to generate just over 12,000 paired-end reads from mitochondria assemblies of Arabidopsis and Rice.
-
 
 ### Example run
 
