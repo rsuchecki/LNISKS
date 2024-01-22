@@ -112,7 +112,7 @@ All this information with additional detail on parameters used can be found in t
 Adjust version as required
 
 ```
-LNISKS_VERSION=1.1.2
+LNISKS_VERSION=1.1.6
 docker run \
   -v "$PWD":"$PWD" \
   -w "$PWD"  \
@@ -124,6 +124,7 @@ docker run \
     -t 2 \
     -I -i \
     -C $COLUMNS \
+    -E 2 \
     -S 10
 ```
 
