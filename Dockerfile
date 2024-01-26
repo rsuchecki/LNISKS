@@ -8,7 +8,7 @@ RUN apt-get update \
       bsdmainutils \
     && rm -rf /var/lib/apt/lists/*
 
-ENV KMC_VER=3.2.3
+ENV KMC_VER=3.2.1
 ENV VSEARCH_VER=2.17.0
 ENV YAKAT_VER=0.9.5
 
@@ -18,9 +18,9 @@ RUN apt-get -qq update && apt-get -qq -y install --no-install-recommends procps 
   && apt-get -qq -y autoremove \
   && apt-get autoclean \
   && rm -rf /var/lib/apt/lists/* /var/log/dpkg.log \
-  && wget https://github.com/refresh-bio/KMC/releases/download/v${KMC_VER}/KMC${KMC_VER}.linux.x64.tar.gz \
-  && tar xzvf KMC${KMC_VER}.linux.x64.tar.gz \
-  && rm KMC${KMC_VER}.linux.x64.tar.gz \
+  && wget https://github.com/refresh-bio/KMC/releases/download/v${KMC_VER}/KMC${KMC_VER}.linux.tar.gz \
+  && tar xzvf KMC${KMC_VER}.linux.tar.gz --strip-components=1 \
+  && rm KMC${KMC_VER}.linux.tar.gz \
   && wget https://github.com/torognes/vsearch/releases/download/v${VSEARCH_VER}/vsearch-${VSEARCH_VER}-linux-x86_64.tar.gz \
   && tar xzvf vsearch-${VSEARCH_VER}-linux-x86_64.tar.gz \
   && mv vsearch-${VSEARCH_VER}-linux-x86_64/bin/vsearch . \
